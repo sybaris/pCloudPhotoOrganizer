@@ -1,10 +1,14 @@
 ﻿using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace pCloudPhotoOrganizer.Services;
 
 public class SettingsService
 {
     private const string KeyFolders = "media_folders";
+    private const string KeyPCloudUser = "pcloud_user";
+    private const string KeyPCloudRoot = "pcloud_root";
+    private const string KeyPCloudToken = "pcloud_token";
 
     /// <summary>
     /// Retourne la liste des dossiers configurés pour les photos.
@@ -52,5 +56,53 @@ public class SettingsService
     public void ClearFolders()
     {
         Preferences.Default.Remove(KeyFolders);
+    }
+
+    public string? GetPCloudUsername()
+        => Preferences.Default.Get(KeyPCloudUser, string.Empty);
+
+    public void SavePCloudUsername(string? username)
+    {
+        Preferences.Default.Set(KeyPCloudUser, username ?? string.Empty);
+    }
+
+    public string? GetPCloudRootFolder()
+        => Preferences.Default.Get(KeyPCloudRoot, string.Empty);
+
+    public void SavePCloudRootFolder(string? rootFolder)
+    {
+        Preferences.Default.Set(KeyPCloudRoot, rootFolder ?? string.Empty);
+    }
+
+    public async Task<string?> GetPCloudTokenAsync()
+    {
+        try
+        {
+            return await SecureStorage.Default.GetAsync(KeyPCloudToken);
+        }
+        catch
+        {
+            // fallback to preferences if secure storage not available
+            return Preferences.Default.Get(KeyPCloudToken, string.Empty);
+        }
+    }
+
+    public async Task SavePCloudTokenAsync(string? token)
+    {
+        try
+        {
+            if (token == null)
+            {
+                SecureStorage.Default.Remove(KeyPCloudToken);
+            }
+            else
+            {
+                await SecureStorage.Default.SetAsync(KeyPCloudToken, token);
+            }
+        }
+        catch
+        {
+            Preferences.Default.Set(KeyPCloudToken, token ?? string.Empty);
+        }
     }
 }
