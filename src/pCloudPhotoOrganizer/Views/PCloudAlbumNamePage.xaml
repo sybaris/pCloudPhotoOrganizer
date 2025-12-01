@@ -17,6 +17,12 @@
         Keyboard="Text"
         ClearButtonVisibility="WhileEditing" />
 
+    <Label
+        x:Name="ErrorLabel"
+        TextColor="Red"
+        FontSize="Small"
+        IsVisible="False" />
+
     <HorizontalStackLayout HorizontalOptions="End" Spacing="10">
       <Button
           Text="Annuler"
