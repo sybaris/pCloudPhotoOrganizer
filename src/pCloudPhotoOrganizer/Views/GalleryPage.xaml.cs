@@ -17,7 +17,9 @@ public partial class GalleryPage : ContentPage
         base.OnAppearing();
 
         if (BindingContext is GalleryViewModel vm)
+        {
             await vm.LoadAsync();
+        }
     }
 
     private void OnGroupSelectionTapped(object sender, TappedEventArgs e)

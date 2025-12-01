@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
+<maui:ContentPage
     x:Class="pCloudPhotoOrganizer.Views.GalleryPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maui="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     Title="Gallery"
     BackgroundColor="White">
-  <ContentPage.ToolbarItems>
+  <maui:ContentPage.ToolbarItems>
     <ToolbarItem Text="Vers pCloud" Clicked="OnSendToPCloudClicked" />
-  </ContentPage.ToolbarItems>
+  </maui:ContentPage.ToolbarItems>
 
   <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding RefreshCommand}">
     <CollectionView
@@ -187,4 +188,4 @@
 
     </CollectionView>
   </RefreshView>
-</ContentPage>
+</maui:ContentPage>
