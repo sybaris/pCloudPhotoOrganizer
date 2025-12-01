@@ -1,0 +1,8 @@
+﻿📷 Photos prises avec l’appareil photo
+/storage/emulated/0/DCIM/Camera
+📸 Captures d’écran de l’appareil
+/storage/emulated/0/Pictures/Screenshots
+🖼️ Dossier Photos générique (si vous avez déplacé des choses)
+/storage/emulated/0/Pictures
+💬 Exemple WhatsApp images (pour plus tard)
+/storage/emulated/0/WhatsApp/Media/WhatsApp Images

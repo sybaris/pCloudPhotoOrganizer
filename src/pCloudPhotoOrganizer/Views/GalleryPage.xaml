@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="pCloudPhotoOrganizer.Views.GalleryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Gallery"
+    BackgroundColor="White">
+  <ContentPage.ToolbarItems>
+    <ToolbarItem Text="Vers pCloud" Clicked="OnSendToPCloudClicked" />
+  </ContentPage.ToolbarItems>
+
+  <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding RefreshCommand}">
+    <CollectionView
+            x:Name="GalleryCollectionView"
+            ItemsSource="{Binding Groups}"
+            IsGrouped="True"
+            SelectionMode="None"
+            Margin="10">
+
+      <!-- Vue quand il n’y a aucune photo -->
+      <CollectionView.EmptyView>
+        <Grid>
+          <Label Text="Aucune photo trouvée"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           FontSize="Medium"
+                           TextColor="Gray" />
+        </Grid>
+      </CollectionView.EmptyView>
+
+      <!-- En-tête de groupe (date) -->
+      <CollectionView.GroupHeaderTemplate>
+        <DataTemplate>
+          <StackLayout Padding="5,10"
+                 BackgroundColor="#EEEEEE"
+                 Orientation="Horizontal"
+                 HorizontalOptions="Fill"
+                 VerticalOptions="Center">
+
+            <!-- Date / titre du groupe -->
+            <Label Text="{Binding Title}"
+             FontAttributes="Bold"
+             FontSize="Medium"
+             VerticalOptions="Center"
+             HorizontalOptions="StartAndExpand" />
+
+            <!-- Bouton de sélection pour toute la date -->
+            <Frame
+          HasShadow="False"
+          CornerRadius="15"
+          Padding="0"
+          WidthRequest="30"
+          HeightRequest="30"
+          BackgroundColor="#80FFFFFF"
+          BorderColor="LightGray"
+          HorizontalOptions="End"
+          VerticalOptions="Center">
+
+              <Label
+            Text=""
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            FontSize="14"
+            FontAttributes="Bold"
+            TextColor="Transparent">
+                <Label.Triggers>
+                  <!-- Quand TOUT le groupe est sélectionné -->
+                  <DataTrigger TargetType="Label"
+                         Binding="{Binding IsAllSelected}"
+                         Value="True">
+                    <Setter Property="Text" Value="✓" />
+                    <Setter Property="TextColor" Value="White" />
+                  </DataTrigger>
+
+                  <!-- Quand le groupe n'est pas entièrement sélectionné -->
+                  <DataTrigger TargetType="Label"
+                         Binding="{Binding IsAllSelected}"
+                         Value="False">
+                    <Setter Property="Text" Value="" />
+                    <Setter Property="TextColor" Value="Transparent" />
+                  </DataTrigger>
+                </Label.Triggers>
+              </Label>
+
+              <Frame.Triggers>
+                <!-- Groupe entièrement sélectionné -->
+                <DataTrigger TargetType="Frame"
+                       Binding="{Binding IsAllSelected}"
+                       Value="True">
+                  <Setter Property="BackgroundColor" Value="DodgerBlue" />
+                  <Setter Property="BorderColor" Value="DodgerBlue" />
+                </DataTrigger>
+
+                <!-- Groupe non entièrement sélectionné -->
+                <DataTrigger TargetType="Frame"
+                       Binding="{Binding IsAllSelected}"
+                       Value="False">
+                  <Setter Property="BackgroundColor" Value="#80FFFFFF" />
+                  <Setter Property="BorderColor" Value="LightGray" />
+                </DataTrigger>
+              </Frame.Triggers>
+
+              <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
+              <Frame.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnGroupSelectionTapped" />
+              </Frame.GestureRecognizers>
+            </Frame>
+
+          </StackLayout>
+        </DataTemplate>
+      </CollectionView.GroupHeaderTemplate>
+
+      <!-- Miniatures avec bouton de sélection en haut à droite -->
+      <CollectionView.ItemTemplate>
+        <DataTemplate>
+          <Grid Padding="2">
+            <Frame HasShadow="False"
+                   CornerRadius="5"
+                   Padding="0">
+              <Grid>
+
+                <!-- La photo -->
+                <Image Source="{Binding Thumbnail}"
+                           Aspect="AspectFill" />
+
+                <!-- Bouton de sélection (toujours visible) -->
+                <Grid
+    WidthRequest="30"
+    HeightRequest="30"
+    HorizontalOptions="End"
+    VerticalOptions="Start"
+    Margin="4">
+
+                  <Frame x:Name="SelectionCircle"
+           HasShadow="False"
+           CornerRadius="15"
+           Padding="0"
+           BackgroundColor="#80FFFFFF"
+           BorderColor="LightGray">
+
+                    <Label x:Name="SelectionLabel"
+               Text=""
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               FontSize="14"
+               FontAttributes="Bold"
+               TextColor="Transparent">
+                      <Label.Triggers>
+                        <DataTrigger TargetType="Label"
+                             Binding="{Binding IsSelected}"
+                             Value="True">
+                          <Setter Property="Text" Value="✓" />
+                          <Setter Property="TextColor" Value="White" />
+                        </DataTrigger>
+                      </Label.Triggers>
+                    </Label>
+
+                    <Frame.Triggers>
+                      <DataTrigger TargetType="Frame"
+                         Binding="{Binding IsSelected}"
+                         Value="True">
+                        <Setter Property="BackgroundColor" Value="DodgerBlue" />
+                        <Setter Property="BorderColor" Value="DodgerBlue" />
+                      </DataTrigger>
+                    </Frame.Triggers>
+
+                    <Frame.GestureRecognizers>
+                      <TapGestureRecognizer
+                Command="{Binding Source={x:Reference GalleryCollectionView}, Path=BindingContext.ToggleSelectCommand}"
+                CommandParameter="{Binding .}" />
+                    </Frame.GestureRecognizers>
+                  </Frame>
+                </Grid>
+
+
+              </Grid>
+            </Frame>
+          </Grid>
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+
+
+      <!-- Grille 3 colonnes -->
+      <CollectionView.ItemsLayout>
+        <GridItemsLayout Orientation="Vertical" Span="3" />
+      </CollectionView.ItemsLayout>
+
+    </CollectionView>
+  </RefreshView>
+</ContentPage>
