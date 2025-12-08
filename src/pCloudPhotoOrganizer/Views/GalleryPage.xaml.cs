@@ -19,6 +19,7 @@ WEB-DAV LIMITATIONS OF PCLOUD (MANDATORY FOR ALL CODE):
 ------------------------------------------------------------
 */
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -113,6 +114,8 @@ public partial class GalleryPage : ContentPage
         _vm.IsUploading = true;
         _vm.UploadStatus = "Préparation de l'upload...";
 
+        var itemsToDelete = new List<MediaItem>();
+
         try
         {
             await _fileService.EnsureFolderExistsAsync(user!, password!, targetPath);
@@ -134,7 +137,7 @@ public partial class GalleryPage : ContentPage
 
                 if (selection.MoveFiles)
                 {
-                    await _deletionService.DeleteAsync(item);
+                    itemsToDelete.Add(item);
                 }
             }
 
@@ -157,6 +160,11 @@ public partial class GalleryPage : ContentPage
         }
         finally
         {
+            if (selection.MoveFiles && itemsToDelete.Count > 0)
+            {
+                await _deletionService.DeleteAsync(itemsToDelete);
+            }
+
             _vm.IsUploading = false;
         }
     }

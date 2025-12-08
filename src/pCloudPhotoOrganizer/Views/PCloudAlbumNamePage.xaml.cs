@@ -104,14 +104,7 @@ public partial class PCloudAlbumNamePage : ContentPage
 
         if (DeviceInfo.Platform == DevicePlatform.Android)
         {
-            try
-            {
-                HapticFeedback.Default.Perform(HapticFeedbackType.Click);
-            }
-            catch
-            {
-                // best-effort haptic
-            }
+            HapticFeedback.Default.Perform(HapticFeedbackType.Click);
         }
     }
 

@@ -35,7 +35,9 @@ namespace pCloudPhotoOrganizer
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<AboutPage>();
             //builder.Services.AddTransient<AlbumCreationPage>();
-
+#if ANDROID
+            Console.WriteLine("This is Android specific code.");
+#endif
             return builder.Build();
         }
     }

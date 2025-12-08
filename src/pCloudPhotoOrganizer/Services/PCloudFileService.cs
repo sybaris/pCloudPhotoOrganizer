@@ -94,28 +94,47 @@ public class PCloudFileService
             throw new PCloudUploadException($"Upload WebDAV échoué (HTTP {(int)response.StatusCode}).", response.StatusCode, body);
     }
 
-    private async Task<(Stream Stream, long? Length)> OpenReadStreamAsync(MediaItem item, CancellationToken ct)
+    private Task<(Stream Stream, long? Length)> OpenReadStreamAsync(MediaItem item, CancellationToken ct)
     {
 #if ANDROID
+        return OpenAndroidStreamAsync(item, ct);
+#else
+        if (string.IsNullOrWhiteSpace(item.FilePath))
+            throw new FileNotFoundException("Chemin du fichier manquant pour l'upload.");
+
+        var stream = File.OpenRead(item.FilePath);
+        long? length = item.Length;
+
+        if (stream.CanSeek)
+            length ??= stream.Length;
+
+        return Task.FromResult<(Stream, long?)>((stream, length));
+#endif
+    }
+
+#if ANDROID
+    private async Task<(Stream Stream, long? Length)> OpenAndroidStreamAsync(MediaItem item, CancellationToken ct)
+    {
         await MediaPermissionHelper.EnsureMediaPermissionAsync();
 
         if (item.ContentUri is null)
             throw new FileNotFoundException("URI de contenu manquante pour l'element Android.");
 
-        var context = AndroidApp.Context;
-        var androidUri = AndroidUri.Parse(item.ContentUri.ToString());
+        var context = AndroidApp.Context ?? throw new InvalidOperationException("Impossible d'accéder au contexte Android.");
+        var androidUri = AndroidUri.Parse(item.ContentUri.ToString()) ?? throw new FileNotFoundException($"URI Android invalide : {item.ContentUri}");
+        var contentResolver = context.ContentResolver ?? throw new FileNotFoundException("ContentResolver indisponible pour ouvrir le media.");
 
         _logger.LogDebug("Opening Android media stream. ContentUri={ContentUri}, LengthHint={Length}, FilePath={FilePath}", item.ContentUri, item.Length, item.FilePath);
 
         try
         {
-            var stream = context.ContentResolver?.OpenInputStream(androidUri)
+            var stream = contentResolver.OpenInputStream(androidUri)
                 ?? throw new FileNotFoundException($"Impossible d'ouvrir le media : {item.ContentUri}");
 
             long? length = item.Length;
             try
             {
-                using var descriptor = context.ContentResolver?.OpenAssetFileDescriptor(androidUri, "r");
+                using var descriptor = contentResolver.OpenAssetFileDescriptor(androidUri, "r");
                 if (descriptor is not null && descriptor.Length >= 0)
                     length = descriptor.Length;
             }
@@ -137,19 +156,8 @@ public class PCloudFileService
                 ex.Message);
             throw;
         }
-#else
-        if (string.IsNullOrWhiteSpace(item.FilePath))
-            throw new FileNotFoundException("Chemin du fichier manquant pour l'upload.");
-
-        var stream = File.OpenRead(item.FilePath);
-        long? length = item.Length;
-
-        if (stream.CanSeek)
-            length ??= stream.Length;
-
-        return (stream, length);
-#endif
     }
+#endif
 
     // pCloud constraint: folder creation cannot be done via WebDAV. It must use the public API:
     // - Paths must be absolute (start with "/")

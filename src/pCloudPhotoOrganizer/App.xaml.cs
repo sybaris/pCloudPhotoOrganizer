@@ -4,6 +4,10 @@ using pCloudPhotoOrganizer.Platforms.Windows;
 #endif
 
 using pCloudPhotoOrganizer.Services;
+#if ANDROID
+using Microsoft.Maui.ApplicationModel;
+using pCloudPhotoOrganizer.Platforms.Android;
+#endif
 
 namespace pCloudPhotoOrganizer
 {
@@ -18,15 +22,29 @@ namespace pCloudPhotoOrganizer
 
             MainPage = new AppShell();
 
-            // Si aucun dossier n'est configuré, on ouvre directement la page Paramètres
+            // Si aucun dossier n'est configure, on ouvre directement la page Parametres
             if (!_settings.AreFoldersConfigured())
             {
-                // Route "settings" définie dans AppShell.xaml
+                // Route "settings" definie dans AppShell.xaml
                 (MainPage as Shell)?.GoToAsync("//settings");
             }
+
+#if ANDROID
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                try
+                {
+                    await MediaPermissionHelper.EnsureStartupPermissionsAsync(() => MainPage);
+                }
+                catch (Exception)
+                {
+                    // The helper already shows a friendly message and logs details.
+                }
+            });
+#endif
         }
 
-        protected override Window CreateWindow(IActivationState activationState)
+        protected override Window CreateWindow(IActivationState? activationState)
         {
             var window = base.CreateWindow(activationState);
 

@@ -15,17 +15,37 @@ public class MediaStoreService
         var context = Android.App.Application.Context;
         await MediaPermissionHelper.EnsureMediaPermissionAsync();
 
+        var contentResolver = context.ContentResolver;
+        if (contentResolver is null)
+        {
+            Log.Warn("MediaStoreService", "ContentResolver indisponible; aucun media retourne.");
+            return new List<MediaItem>();
+        }
+
         var items = new List<MediaItem>();
 
         foreach (var (contentUri, name, date, size) in MediaStoreQuery.QueryImages(context))
         {
+            if (contentUri is null)
+            {
+                Log.Warn("MediaStoreService", "Content URI null ignoré.");
+                continue;
+            }
+
+            var uriString = contentUri.ToString();
+            if (string.IsNullOrWhiteSpace(uriString))
+            {
+                Log.Warn("MediaStoreService", "Content URI vide ou invalide ignoré.");
+                continue;
+            }
+
             var dt = DateTimeOffset.FromUnixTimeMilliseconds(date).DateTime;
-            var systemUri = new Uri(contentUri.ToString());
+            var systemUri = new Uri(uriString);
             var persistableTaken = false;
 
             try
             {
-                context.ContentResolver?.TakePersistableUriPermission(contentUri, ActivityFlags.GrantReadUriPermission);
+                contentResolver.TakePersistableUriPermission(contentUri, ActivityFlags.GrantReadUriPermission);
                 persistableTaken = true;
                 Log.Info("MediaStoreService", $"Persistable read permission granted for {contentUri}");
             }
@@ -37,7 +57,7 @@ public class MediaStoreService
             ImageSource? thumbnail = null;
             try
             {
-                thumbnail = ImageSource.FromStream(() => context.ContentResolver?.OpenInputStream(contentUri) ?? Stream.Null);
+                thumbnail = ImageSource.FromStream(() => contentResolver.OpenInputStream(contentUri) ?? Stream.Null);
             }
             catch
             {

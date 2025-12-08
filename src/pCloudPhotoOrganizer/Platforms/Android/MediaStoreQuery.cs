@@ -10,7 +10,13 @@ public static class MediaStoreQuery
 {
     public static IEnumerable<(AndroidUri contentUri, string displayName, long dateTaken, long? size)> QueryImages(Context context)
     {
+        var contentResolver = context.ContentResolver;
+        if (contentResolver is null)
+            yield break;
+
         var uri = MediaStore.Images.Media.ExternalContentUri;
+        if (uri is null)
+            yield break;
 
         string[] projection =
         {
@@ -20,7 +26,7 @@ public static class MediaStoreQuery
             MediaStore.Images.Media.InterfaceConsts.Size
         };
 
-        using var cursor = context.ContentResolver.Query(uri, projection, null, null, $"{MediaStore.Images.Media.InterfaceConsts.DateTaken} DESC");
+        using var cursor = contentResolver.Query(uri, projection, null, null, $"{MediaStore.Images.Media.InterfaceConsts.DateTaken} DESC");
         if (cursor == null) yield break;
 
         int idIndex = cursor.GetColumnIndex(projection[0]);
