@@ -1,20 +1,57 @@
-﻿using System.Linq;
+/*
+WEB-DAV LIMITATIONS OF PCLOUD (MANDATORY FOR ALL CODE):
+- PROPFIND is NOT supported
+- MKCOL is NOT supported
+- COPY is NOT supported
+- MOVE is NOT supported
+- PROPPATCH is NOT supported
+- Directory existence CANNOT be checked via WebDAV
+- Folder listing CANNOT be done via WebDAV
+- The ONLY supported WebDAV verbs are:
+  OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
+- Upload MUST be done using PUT or POST only
+- Directory creation MUST be done via pCloud public API:
+     https://eapi.pcloud.com/createfolderifnotexists
+- Folder existence MUST be checked using pCloud API:
+     https://eapi.pcloud.com/listfolder
+- The final file upload should use direct WebDAV PUT:
+     https://ewebdav.pcloud.com/<remote-path>/<filename>
+------------------------------------------------------------
+*/
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using pCloudPhotoOrganizer.Models;
+using pCloudPhotoOrganizer.Services;
 using pCloudPhotoOrganizer.ViewModels;
 
 namespace pCloudPhotoOrganizer.Views;
 
 public partial class GalleryPage : ContentPage
 {
-    public GalleryPage(GalleryViewModel vm)
+    private readonly GalleryViewModel _vm;
+    private readonly PCloudFileService _fileService;
+    private readonly SettingsService _settings;
+    private readonly MediaDeletionService _deletionService;
+
+    public GalleryPage(GalleryViewModel vm, PCloudFileService fileService, PCloudAuthService authService, SettingsService settings, MediaDeletionService deletionService)
     {
         InitializeComponent();
-        BindingContext = vm;
+        _vm = vm;
+        _fileService = fileService;
+        _settings = settings;
+        _deletionService = deletionService;
+        BindingContext = _vm;
+        _ = authService; // kept for DI compatibility
+        Debug.WriteLine($"[GalleryPage] ctor, VM instance={_vm.GetHashCode()}");
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        Debug.WriteLine("[GalleryPage] OnAppearing");
 
         if (BindingContext is GalleryViewModel vm)
         {
@@ -22,82 +59,22 @@ public partial class GalleryPage : ContentPage
         }
     }
 
-    private void OnGroupSelectionTapped(object sender, TappedEventArgs e)
+    protected override void OnBindingContextChanged()
     {
-        if (BindingContext is not GalleryViewModel vm)
-            return;
-
-        if (sender is not Frame frame)
-            return;
-
-        // Le BindingContext du header = MediaGroup (groupe de photos par date)
-        if (frame.BindingContext is not MediaGroup group)
-            return;
-
-        // MediaGroup hérite généralement de IEnumerable<MediaItem>
-        // → on peut itérer directement dessus
-        var items = group.OfType<MediaItem>().ToList();
-        if (!items.Any())
-            return;
-
-        // Est-ce que toutes les photos de ce groupe sont déjà sélectionnées ?
-        bool allSelected = items.All(i => i.IsSelected);
-        bool newState = !allSelected; // si toutes sélectionnées → on désélectionne tout, sinon on sélectionne tout
-
-        foreach (var item in items)
-        {
-            if (item.IsSelected == newState)
-                continue;
-
-            item.IsSelected = newState;
-
-            if (newState)
-            {
-                if (!vm.SelectedItems.Contains(item))
-                    vm.SelectedItems.Add(item);
-            }
-            else
-            {
-                vm.SelectedItems.Remove(item);
-            }
-        }
-
-        // Mise à jour visuelle du rond de la date
-        if (newState)
-        {
-            frame.BackgroundColor = Colors.DodgerBlue;
-            frame.BorderColor = Colors.DodgerBlue;
-            if (frame.Content is Label lbl)
-            {
-                lbl.Text = "✓";
-                lbl.TextColor = Colors.White;
-            }
-        }
-        else
-        {
-            frame.BackgroundColor = Color.FromArgb("#80FFFFFF");
-            frame.BorderColor = Colors.LightGray;
-            if (frame.Content is Label lbl)
-            {
-                lbl.Text = string.Empty;
-                lbl.TextColor = Colors.Transparent;
-            }
-        }
+        base.OnBindingContextChanged();
+        Debug.WriteLine($"[GalleryPage] BindingContext changed to {BindingContext?.GetType().Name} instance={BindingContext?.GetHashCode()}");
     }
 
     private async void OnSendToPCloudClicked(object sender, EventArgs e)
     {
-        if (BindingContext is not GalleryViewModel vm)
-            return;
-
-        if (vm.SelectedItems is null || vm.SelectedItems.Count == 0)
+        if (_vm.SelectedItems is null || _vm.SelectedItems.Count == 0)
         {
             await DisplayAlert("pCloud", "Sélectionnez au moins une photo avant d'envoyer vers pCloud.", "OK");
             return;
         }
 
         // Déterminer la date de base pour le nom de dossier
-        var distinctDates = vm.SelectedItems
+        var distinctDates = _vm.SelectedItems
             .Select(i => i.DateTaken.Date)
             .Distinct()
             .OrderBy(d => d)
@@ -110,13 +87,13 @@ public partial class GalleryPage : ContentPage
         string suggestedName = $"{baseDate:yyyy.MM.dd} - ";
 
         // Ouvrir une page modale avec un Entry et le curseur à la fin du texte
-        var tcs = new TaskCompletionSource<string?>();
+        var tcs = new TaskCompletionSource<PCloudAlbumSelection?>();
         var popup = new PCloudAlbumNamePage(suggestedName, tcs);
         await Navigation.PushModalAsync(popup);
 
-        string? albumName = await tcs.Task;
+        var selection = await tcs.Task;
 
-        if (string.IsNullOrWhiteSpace(albumName))
+        if (selection is null || string.IsNullOrWhiteSpace(selection.AlbumName))
         {
             // Annulé ou vide → on ne fait rien
             return;
@@ -124,12 +101,80 @@ public partial class GalleryPage : ContentPage
 
 
         // POC : on affiche simplement ce qui serait envoyé
-        int count = vm.SelectedItems.Count;
-        string message = $"(POC) {count} élément(s) seraient envoyés vers pCloud dans le dossier :\n\n{albumName}";
+        var (user, password, root) = await GetPCloudCredentialsAsync();
+        if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password))
+        {
+            await DisplayAlert("pCloud", "Renseignez vos identifiants pCloud dans les paramètres.", "OK");
+            return;
+        }
 
-        await DisplayAlert("pCloud (POC)", message, "OK");
+        string targetPath = CombinePaths(string.IsNullOrWhiteSpace(root) ? "/" : root, selection.AlbumName);
 
-        // 🚧 Étape suivante : appeler un service PCloudFileService pour uploader réellement
-        // await _pcloudFileService.UploadAsync(albumName, vm.SelectedItems);
+        _vm.IsUploading = true;
+        _vm.UploadStatus = "Préparation de l'upload...";
+
+        try
+        {
+            await _fileService.EnsureFolderExistsAsync(user!, password!, targetPath);
+
+            int total = _vm.SelectedItems.Count;
+            int index = 0;
+
+            foreach (var item in _vm.SelectedItems.ToList())
+            {
+                index++;
+                _vm.UploadStatus = $"Upload {index}/{total} : {item.DisplayName}";
+
+                var progress = new Progress<double>(p =>
+                {
+                    _vm.UploadStatus = $"Upload {index}/{total} : {item.DisplayName} ({p:P0})";
+                });
+
+                await _fileService.UploadAsync(user!, password!, targetPath, item, progress);
+
+                if (selection.MoveFiles)
+                {
+                    await _deletionService.DeleteAsync(item);
+                }
+            }
+
+            _vm.UploadStatus = selection.MoveFiles ? "Déplacement terminé" : "Upload terminé";
+            await DisplayAlert("pCloud", "Envoi terminé !", "OK");
+        }
+        catch (PCloudAuthenticationException)
+        {
+            _vm.UploadStatus = "Identifiants pCloud invalides";
+            await DisplayAlert("pCloud", "Identifiants pCloud invalides. Vérifiez votre login/mot de passe.", "OK");
+        }
+        catch (PCloudUploadException ex)
+        {
+            _vm.UploadStatus = "Echec de l'upload vers pCloud";
+            await DisplayAlert("pCloud", $"Échec du téléversement (HTTP {(int)ex.StatusCode}) : {ex.ResponseBody}", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("pCloud", $"Erreur durant l'envoi : {ex.Message}", "OK");
+        }
+        finally
+        {
+            _vm.IsUploading = false;
+        }
+    }
+
+    private async Task<(string? user, string? password, string? root)> GetPCloudCredentialsAsync()
+    {
+        var user = await _settings.GetPCloudUsernameAsync();
+        var password = await _settings.GetPCloudPasswordAsync();
+        var root = _settings.GetPCloudRootFolder();
+        return (user, password, root);
+    }
+
+    private static string CombinePaths(string root, string album)
+    {
+        root = string.IsNullOrWhiteSpace(root) ? "/" : root.TrimEnd('/');
+        album = album.Trim();
+        if (!root.StartsWith("/"))
+            root = "/" + root;
+        return root == "/" ? $"/{album}" : $"{root}/{album}";
     }
 }

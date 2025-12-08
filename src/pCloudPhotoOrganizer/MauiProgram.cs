@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using pCloudPhotoOrganizer.Services;
 using pCloudPhotoOrganizer.ViewModels;
 using pCloudPhotoOrganizer.Views;
@@ -22,6 +22,7 @@ namespace pCloudPhotoOrganizer
             builder.Services.AddSingleton<PCloudAuthService>();
             builder.Services.AddSingleton<PCloudFileService>();
             builder.Services.AddSingleton<SettingsService>();
+            builder.Services.AddSingleton<MediaDeletionService>();
             //builder.Services.AddSingleton<ThumbnailCacheService>();
 
             // ViewModels
@@ -32,6 +33,7 @@ namespace pCloudPhotoOrganizer
             // Views
             builder.Services.AddSingleton<Views.GalleryPage>();
             builder.Services.AddTransient<SettingsPage>();
+            builder.Services.AddTransient<AboutPage>();
             //builder.Services.AddTransient<AlbumCreationPage>();
 
             return builder.Build();

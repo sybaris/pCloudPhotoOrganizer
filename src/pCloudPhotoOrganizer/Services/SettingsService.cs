@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace pCloudPhotoOrganizer.Services;
@@ -9,6 +10,10 @@ public class SettingsService
     private const string KeyPCloudUser = "pcloud_user";
     private const string KeyPCloudRoot = "pcloud_root";
     private const string KeyPCloudToken = "pcloud_token";
+    private const string KeyPCloudPassword = "pcloud_password";
+
+    private const string ObfuscationPrefix = "obf:";
+    private const byte ObfuscationKey = 0x5A;
 
     /// <summary>
     /// Retourne la liste des dossiers configurés pour les photos.
@@ -58,14 +63,6 @@ public class SettingsService
         Preferences.Default.Remove(KeyFolders);
     }
 
-    public string? GetPCloudUsername()
-        => Preferences.Default.Get(KeyPCloudUser, string.Empty);
-
-    public void SavePCloudUsername(string? username)
-    {
-        Preferences.Default.Set(KeyPCloudUser, username ?? string.Empty);
-    }
-
     public string? GetPCloudRootFolder()
         => Preferences.Default.Get(KeyPCloudRoot, string.Empty);
 
@@ -74,35 +71,104 @@ public class SettingsService
         Preferences.Default.Set(KeyPCloudRoot, rootFolder ?? string.Empty);
     }
 
-    public async Task<string?> GetPCloudTokenAsync()
-    {
-        try
-        {
-            return await SecureStorage.Default.GetAsync(KeyPCloudToken);
-        }
-        catch
-        {
-            // fallback to preferences if secure storage not available
-            return Preferences.Default.Get(KeyPCloudToken, string.Empty);
-        }
-    }
+    public async Task<string?> GetPCloudUsernameAsync() => await RetrieveSecureAsync(KeyPCloudUser);
 
-    public async Task SavePCloudTokenAsync(string? token)
+    public async Task SavePCloudUsernameAsync(string? username) => await StoreSecureAsync(KeyPCloudUser, username);
+
+    public async Task<string?> GetPCloudPasswordAsync() => await RetrieveSecureAsync(KeyPCloudPassword);
+
+    public async Task SavePCloudPasswordAsync(string? password) => await StoreSecureAsync(KeyPCloudPassword, password);
+
+    public async Task<string?> GetPCloudTokenAsync() => await RetrieveSecureAsync(KeyPCloudToken);
+
+    public async Task SavePCloudTokenAsync(string? token) => await StoreSecureAsync(KeyPCloudToken, token);
+
+    private async Task StoreSecureAsync(string key, string? value)
     {
+        var payload = Obfuscate(value);
+
         try
         {
-            if (token == null)
+            if (string.IsNullOrEmpty(value))
             {
-                SecureStorage.Default.Remove(KeyPCloudToken);
+                SecureStorage.Default.Remove(key);
             }
             else
             {
-                await SecureStorage.Default.SetAsync(KeyPCloudToken, token);
+                await SecureStorage.Default.SetAsync(key, payload);
+            }
+
+            Preferences.Default.Remove(key);
+        }
+        catch
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                Preferences.Default.Remove(key);
+            }
+            else
+            {
+                Preferences.Default.Set(key, payload);
+            }
+        }
+    }
+
+    private async Task<string?> RetrieveSecureAsync(string key)
+    {
+        try
+        {
+            var secured = await SecureStorage.Default.GetAsync(key);
+            if (!string.IsNullOrEmpty(secured))
+            {
+                return Deobfuscate(secured);
             }
         }
         catch
         {
-            Preferences.Default.Set(KeyPCloudToken, token ?? string.Empty);
+            // ignore, fallback below
+        }
+
+        var fromPrefs = Preferences.Default.Get(key, string.Empty);
+        return string.IsNullOrWhiteSpace(fromPrefs) ? null : Deobfuscate(fromPrefs);
+    }
+
+    private string Obfuscate(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+
+        var bytes = Encoding.UTF8.GetBytes(value);
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            bytes[i] ^= ObfuscationKey;
+        }
+
+        return ObfuscationPrefix + Convert.ToBase64String(bytes);
+    }
+
+    private string Deobfuscate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        if (!value.StartsWith(ObfuscationPrefix, StringComparison.Ordinal))
+            return value;
+
+        try
+        {
+            var payload = value.Substring(ObfuscationPrefix.Length);
+            var bytes = Convert.FromBase64String(payload);
+
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] ^= ObfuscationKey;
+            }
+
+            return Encoding.UTF8.GetString(bytes);
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 }

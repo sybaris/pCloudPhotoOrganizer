@@ -49,8 +49,8 @@
     <Entry x:Name="PCloudUserEntry"
            Placeholder="Email ou nom d'utilisateur pCloud" />
 
-    <Entry x:Name="PCloudTokenEntry"
-           Placeholder="Mot de passe ou token API"
+    <Entry x:Name="PCloudPasswordEntry"
+           Placeholder="Mot de passe pCloud"
            IsPassword="True" />
 
     <Entry x:Name="PCloudRootEntry"

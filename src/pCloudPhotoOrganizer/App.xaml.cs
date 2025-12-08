@@ -1,4 +1,5 @@
-﻿#if WINDOWS
+// Test Codex auto-apply
+#if WINDOWS
 using pCloudPhotoOrganizer.Platforms.Windows;
 #endif
 
@@ -40,3 +41,5 @@ namespace pCloudPhotoOrganizer
         }
     }
 }
+
+

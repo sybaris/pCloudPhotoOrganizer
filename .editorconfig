@@ -1,0 +1,51 @@
+# Top-level EditorConfig file
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = crlf
+
+# ------------------------------
+# C# formatting rules (.NET / MAUI)
+# ------------------------------
+
+[*.cs]
+# Place "using" directives outside namespaces
+csharp_using_directive_placement = outside_namespace
+
+# Require explicit accessibility modifiers
+dotnet_style_require_accessibility_modifiers = always:suggestion
+
+# Var usage rules
+dotnet_style_var_for_built_in_types = false:suggestion
+dotnet_style_var_for_complex_types = true:silent
+dotnet_style_var_when_type_is_apparent = true:silent
+
+# Prefer expression-bodied members
+csharp_style_expression_bodied_methods = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+
+# Avoid "this." unless necessary
+dotnet_style_qualification_for_field = false:silent
+dotnet_style_qualification_for_property = false:silent
+dotnet_style_qualification_for_method = false:silent
+
+# New line preferences
+csharp_new_line_before_open_brace = all
+csharp_new_line_between_query_expression_clauses = true
+
+# Organize usings
+dotnet_sort_system_directives_first = true
+
+# Naming conventions
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = silent
+dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.camel_case.capitalization = camel_case

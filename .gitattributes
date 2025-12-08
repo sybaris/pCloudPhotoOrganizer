@@ -1,0 +1,15 @@
+# Normalize line endings for all text files
+* text=auto eol=crlf
+
+# Force LF for shell scripts (if ever needed)
+*.sh text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.mp4 binary
+*.zip binary
+*.dll binary

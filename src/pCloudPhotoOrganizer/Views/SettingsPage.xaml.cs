@@ -21,17 +21,19 @@ public partial class SettingsPage : ContentPage
         }
 
         FoldersList.ItemsSource = Folders;
-
-        PCloudUserEntry.Text = _settings.GetPCloudUsername();
-        PCloudRootEntry.Text = _settings.GetPCloudRootFolder();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        var token = await _settings.GetPCloudTokenAsync();
-        PCloudTokenEntry.Text = token;
+        var username = await _settings.GetPCloudUsernameAsync();
+        var password = await _settings.GetPCloudPasswordAsync();
+        var root = _settings.GetPCloudRootFolder();
+
+        PCloudUserEntry.Text = username;
+        PCloudPasswordEntry.Text = password;
+        PCloudRootEntry.Text = root;
     }
 
     private void OnAddFolderClicked(object sender, EventArgs e)
@@ -63,7 +65,7 @@ public partial class SettingsPage : ContentPage
     private async void OnSavePCloudClicked(object sender, EventArgs e)
     {
         var user = PCloudUserEntry.Text?.Trim() ?? string.Empty;
-        var token = PCloudTokenEntry.Text?.Trim() ?? string.Empty;
+        var password = PCloudPasswordEntry.Text?.Trim() ?? string.Empty;
         var root = PCloudRootEntry.Text?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(user))
@@ -72,17 +74,17 @@ public partial class SettingsPage : ContentPage
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(password))
         {
-            ShowPCloudError("Le mot de passe ou token pCloud est requis.");
+            ShowPCloudError("Le mot de passe pCloud est requis.");
             return;
         }
 
         ClearPCloudError();
 
-        _settings.SavePCloudUsername(user);
+        await _settings.SavePCloudUsernameAsync(user);
         _settings.SavePCloudRootFolder(root);
-        await _settings.SavePCloudTokenAsync(token);
+        await _settings.SavePCloudPasswordAsync(password);
 
         await DisplayAlert("pCloud", "Identifiants pCloud sauvegardés.", "OK");
     }

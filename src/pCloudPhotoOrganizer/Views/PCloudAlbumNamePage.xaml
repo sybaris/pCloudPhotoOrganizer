@@ -17,6 +17,15 @@
         Keyboard="Text"
         ClearButtonVisibility="WhileEditing" />
 
+    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+      <CheckBox
+          x:Name="MoveCheckBox"
+          IsChecked="True" />
+      <Label
+          Text="Move photos instead of copying"
+          VerticalOptions="Center" />
+    </HorizontalStackLayout>
+
     <Label
         x:Name="ErrorLabel"
         TextColor="Red"

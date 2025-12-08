@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#if !ANDROID
+using System.IO;
 using pCloudPhotoOrganizer.Models;
 using Microsoft.Maui.Controls;
 
@@ -28,13 +29,15 @@ public class MediaStoreService
 
             foreach (var path in files)
             {
-                var date = File.GetLastWriteTime(path);
+                var fileInfo = new FileInfo(path);
 
                 items.Add(new MediaItem
                 {
                     FilePath = path,
-                    DateTaken = date,
-                    Thumbnail = ImageSource.FromFile(path)
+                    FileName = fileInfo.Name,
+                    DateTaken = fileInfo.LastWriteTime,
+                    Thumbnail = ImageSource.FromFile(path),
+                    Length = fileInfo.Exists ? fileInfo.Length : null
                 });
             }
         }
@@ -50,3 +53,4 @@ public class MediaStoreService
                  or ".heic" or ".mp4" or ".mov" or ".avi" or ".mkv";
     }
 }
+#endif

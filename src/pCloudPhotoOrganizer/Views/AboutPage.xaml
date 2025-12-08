@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="pCloudPhotoOrganizer.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="À propos">
+
+  <ScrollView>
+    <VerticalStackLayout Padding="20" Spacing="12">
+      <Label
+          x:Name="AppNameLabel"
+          FontAttributes="Bold"
+          FontSize="Large" />
+
+      <Label
+          x:Name="VersionLabel"
+          FontSize="Medium" />
+
+      <Label Text="Auteur : Jean-Pierre Planas" />
+
+      <Label Text="GitHub : https://github.com/sybaris/pCloudPhotoOrganizer"
+             TextColor="DodgerBlue">
+        <Label.GestureRecognizers>
+          <TapGestureRecognizer Tapped="OnLinkTapped" />
+        </Label.GestureRecognizers>
+      </Label>
+    </VerticalStackLayout>
+  </ScrollView>
+</ContentPage>

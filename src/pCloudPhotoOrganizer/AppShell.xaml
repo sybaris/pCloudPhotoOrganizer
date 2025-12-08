@@ -17,4 +17,9 @@
         Route="settings"
         ContentTemplate="{DataTemplate views:SettingsPage}" />
 
+  <ShellContent
+        Title="À propos"
+        Route="about"
+        ContentTemplate="{DataTemplate views:AboutPage}" />
+
 </Shell>

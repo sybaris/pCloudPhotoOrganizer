@@ -1,14 +1,15 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.Maui.Devices;
+using pCloudPhotoOrganizer.Models;
 
 namespace pCloudPhotoOrganizer.Views;
 
 public partial class PCloudAlbumNamePage : ContentPage
 {
-    private readonly TaskCompletionSource<string?> _tcs;
+    private readonly TaskCompletionSource<PCloudAlbumSelection?> _tcs;
 
-    public PCloudAlbumNamePage(string suggestedName, TaskCompletionSource<string?> tcs)
+    public PCloudAlbumNamePage(string suggestedName, TaskCompletionSource<PCloudAlbumSelection?> tcs)
     {
         InitializeComponent();
 
@@ -45,7 +46,7 @@ public partial class PCloudAlbumNamePage : ContentPage
         }
 
         ClearError();
-        TryComplete(sanitized);
+        TryComplete(new PCloudAlbumSelection(sanitized, MoveCheckBox.IsChecked));
         await Navigation.PopModalAsync();
     }
 
@@ -120,7 +121,7 @@ public partial class PCloudAlbumNamePage : ContentPage
         ErrorLabel.Text = string.Empty;
     }
 
-    private void TryComplete(string? result)
+    private void TryComplete(PCloudAlbumSelection? result)
     {
         if (_tcs.Task.IsCompleted)
             return;
