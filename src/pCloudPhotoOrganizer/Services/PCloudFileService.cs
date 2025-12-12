@@ -39,12 +39,14 @@ namespace pCloudPhotoOrganizer.Services;
 public class PCloudFileService
 {
     private readonly ILogger<PCloudFileService> _logger;
+    private readonly AppLogService _appLog;
     private readonly HttpClient _webDavClient = new HttpClient { BaseAddress = new Uri("https://ewebdav.pcloud.com/") };
     private readonly HttpClient _apiClient = new HttpClient { BaseAddress = new Uri("https://eapi.pcloud.com/") };
 
-    public PCloudFileService(ILogger<PCloudFileService> logger)
+    public PCloudFileService(ILogger<PCloudFileService> logger, AppLogService appLog)
     {
         _logger = logger;
+        _appLog = appLog;
     }
 
     public async Task EnsureFolderExistsAsync(string username, string password, string remoteFolderPath, CancellationToken cancellationToken = default)
@@ -56,8 +58,18 @@ public class PCloudFileService
         if (!segments.Any())
             return;
 
-        var authToken = await GetAuthTokenAsync(username, password, cancellationToken);
-        await EnsureFolderHierarchyAsync(authToken, segments, cancellationToken);
+        try
+        {
+            await _appLog.LogInfo($"Validation du dossier distant '{absolutePath}'.");
+            var authToken = await GetAuthTokenAsync(username, password, cancellationToken);
+            await EnsureFolderHierarchyAsync(authToken, segments, cancellationToken);
+            await _appLog.LogInfo($"Dossier distant prêt '{absolutePath}'.");
+        }
+        catch (Exception ex)
+        {
+            await _appLog.LogError(ex, $"Erreur lors de la préparation du dossier '{absolutePath}'.");
+            throw;
+        }
     }
 
     public async Task UploadAsync(string username, string password, string remoteFolderPath, MediaItem item, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
@@ -108,7 +120,7 @@ public class PCloudFileService
         if (stream.CanSeek)
             length ??= stream.Length;
 
-        return Task.FromResult<(Stream, long?)>((stream, length));
+        return Task.FromResult<(Stream, long?)>( (stream, length));
 #endif
     }
 

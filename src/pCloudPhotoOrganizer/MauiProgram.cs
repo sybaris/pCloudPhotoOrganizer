@@ -18,6 +18,7 @@ namespace pCloudPhotoOrganizer
                 });
 
             // Services
+            builder.Services.AddSingleton<AppLogService>();
             builder.Services.AddSingleton<MediaStoreService>();
             builder.Services.AddSingleton<PCloudAuthService>();
             builder.Services.AddSingleton<PCloudFileService>();
@@ -34,7 +35,7 @@ namespace pCloudPhotoOrganizer
             builder.Services.AddSingleton<Views.GalleryPage>();
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<AboutPage>();
-            //builder.Services.AddTransient<AlbumCreationPage>();
+            builder.Services.AddTransient<Views.LogsPage>();
 #if ANDROID
             Console.WriteLine("This is Android specific code.");
 #endif

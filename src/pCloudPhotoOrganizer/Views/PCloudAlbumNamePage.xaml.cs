@@ -8,12 +8,14 @@ namespace pCloudPhotoOrganizer.Views;
 public partial class PCloudAlbumNamePage : ContentPage
 {
     private readonly TaskCompletionSource<PCloudAlbumSelection?> _tcs;
+    private readonly bool _defaultMoveMode;
 
-    public PCloudAlbumNamePage(string suggestedName, TaskCompletionSource<PCloudAlbumSelection?> tcs)
+    public PCloudAlbumNamePage(string suggestedName, bool defaultMoveMode, TaskCompletionSource<PCloudAlbumSelection?> tcs)
     {
         InitializeComponent();
 
         _tcs = tcs;
+        _defaultMoveMode = defaultMoveMode;
         AlbumNameEntry.Text = suggestedName;
     }
 
@@ -21,27 +23,42 @@ public partial class PCloudAlbumNamePage : ContentPage
     {
         base.OnAppearing();
 
-        // Place le focus et le curseur à la fin du texte saisi
-        AlbumNameEntry.Focus();
-        var length = AlbumNameEntry.Text?.Length ?? 0;
-        AlbumNameEntry.CursorPosition = length;
-        AlbumNameEntry.SelectionLength = 0;
+        MoveCheckBox.IsChecked = _defaultMoveMode;
+
+        // Place le focus et le curseur … la fin du texte saisi
+        Dispatcher.Dispatch(() =>
+        {
+            AlbumNameEntry.Focus();
+            var length = AlbumNameEntry.Text?.Length ?? 0;
+            AlbumNameEntry.CursorPosition = length;
+            AlbumNameEntry.SelectionLength = 0;
+        });
     }
 
     private async void OnOkClicked(object sender, EventArgs e)
+    {
+        await SubmitAsync();
+    }
+
+    private async void OnAlbumNameCompleted(object sender, EventArgs e)
+    {
+        await SubmitAsync();
+    }
+
+    private async Task SubmitAsync()
     {
         var sanitized = SanitizeName(AlbumNameEntry.Text);
         AlbumNameEntry.Text = sanitized;
 
         if (string.IsNullOrWhiteSpace(sanitized))
         {
-            ShowError("Le nom de l'album ne peut pas être vide.");
+            ShowError("Le nom de l'album ne peut pas ˆtre vide.");
             return;
         }
 
         if (ContainsForbiddenChars(sanitized))
         {
-            ShowError("Le nom contient des caractères interdits: / \\ : * ? \" < > |");
+            ShowError("Le nom contient des caractŠres interdits: / \\ : * ? \" < > |");
             return;
         }
 
@@ -70,7 +87,7 @@ public partial class PCloudAlbumNamePage : ContentPage
         var name = text ?? string.Empty;
         name = name.TrimEnd();
 
-        // Retire une extension de fichier courante si elle est à la fin
+        // Retire une extension de fichier courante si elle est … la fin
         var lower = name.ToLowerInvariant();
         string[] extensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".heic", ".mp4", ".mov", ".avi", ".mkv" };
         foreach (var ext in extensions)

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="pCloudPhotoOrganizer.Views.LogsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Logs">
+  <VerticalStackLayout Padding="20" Spacing="15">
+    <Label Text="Journal d'activité"
+           FontAttributes="Bold"
+           FontSize="Medium" />
+
+    <HorizontalStackLayout Spacing="10">
+      <Button Text="Rafraîchir"
+              Clicked="OnRefreshLogsClicked"
+              CornerRadius="8" />
+      <Button Text="Effacer les logs du jour"
+              Clicked="OnClearLogsClicked"
+              CornerRadius="8"
+              BackgroundColor="#EEEEEE"
+              TextColor="#333333" />
+    </HorizontalStackLayout>
+
+    <Label x:Name="LogsStatusLabel"
+           FontSize="Small"
+           TextColor="Gray"
+           Text="Chargement..." />
+
+    <Frame HasShadow="False"
+           BorderColor="#DDDDDD"
+           BackgroundColor="#F9F9F9"
+           CornerRadius="12"
+           Padding="0"
+           VerticalOptions="FillAndExpand"
+           HeightRequest="280">
+      <Editor x:Name="LogsEditor"
+              IsReadOnly="True"
+              AutoSize="TextChanges"
+              FontFamily="Courier New"
+              TextColor="#222222"
+              BackgroundColor="Transparent"
+              VerticalOptions="FillAndExpand"
+              Text="" />
+    </Frame>
+  </VerticalStackLayout>
+</ContentPage>

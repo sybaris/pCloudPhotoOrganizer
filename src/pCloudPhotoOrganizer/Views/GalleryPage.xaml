@@ -7,6 +7,11 @@
     Title="Gallery"
     BackgroundColor="White">
   <maui:ContentPage.ToolbarItems>
+    <ToolbarItem IconImageSource="icon_refresh.svg"
+                 Command="{Binding RefreshCommand}"
+                 Priority="0"
+                 Order="Primary"
+                 SemanticProperties.Description="Actualiser la galerie" />
     <ToolbarItem Text="Vers pCloud" Clicked="OnSendToPCloudClicked" />
   </maui:ContentPage.ToolbarItems>
 

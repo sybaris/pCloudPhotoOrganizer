@@ -9,17 +9,33 @@
   <ShellContent
         Title="Galerie"
         Route="gallery"
+        Icon="icon-gallery.svg"
         ContentTemplate="{DataTemplate views:GalleryPage}" />
 
   <!-- Page de paramètres : choix des dossiers -->
   <ShellContent
         Title="Paramètres"
         Route="settings"
+        Icon="icon-settings.svg"
         ContentTemplate="{DataTemplate views:SettingsPage}" />
 
+  <!-- Page de logs -->
+  <ShellContent
+        Title="Logs"
+        Route="logs"
+        Icon="icon_logs.svg"
+        ContentTemplate="{DataTemplate views:LogsPage}" />
+
+  <!-- Page à propos -->
   <ShellContent
         Title="À propos"
         Route="about"
+        Icon="icon-about.svg"
         ContentTemplate="{DataTemplate views:AboutPage}" />
+
+  <MenuItem
+      Text="Quitter"
+      IconImageSource="icon-exit.svg"
+      Clicked="OnQuitClicked" />
 
 </Shell>

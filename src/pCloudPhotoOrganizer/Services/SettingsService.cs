@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -11,6 +11,7 @@ public class SettingsService
     private const string KeyPCloudRoot = "pcloud_root";
     private const string KeyPCloudToken = "pcloud_token";
     private const string KeyPCloudPassword = "pcloud_password";
+    private const string KeyDefaultMoveMode = "default_move_mode";
 
     private const string ObfuscationPrefix = "obf:";
     private const byte ObfuscationKey = 0x5A;
@@ -82,6 +83,13 @@ public class SettingsService
     public async Task<string?> GetPCloudTokenAsync() => await RetrieveSecureAsync(KeyPCloudToken);
 
     public async Task SavePCloudTokenAsync(string? token) => await StoreSecureAsync(KeyPCloudToken, token);
+
+    public bool GetDefaultMoveMode() => Preferences.Default.Get(KeyDefaultMoveMode, true);
+
+    public void SaveDefaultMoveMode(bool isMoveMode)
+    {
+        Preferences.Default.Set(KeyDefaultMoveMode, isMoveMode);
+    }
 
     private async Task StoreSecureAsync(string key, string? value)
     {

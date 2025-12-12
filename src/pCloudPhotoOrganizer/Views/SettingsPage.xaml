@@ -5,66 +5,95 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Paramètres">
 
-  <VerticalStackLayout Padding="20" Spacing="15">
+  <ScrollView>
+    <ScrollView.Content>
+      <VerticalStackLayout Padding="20" Spacing="15">
 
-    <Label Text="Dossiers utilisés pour rechercher les photos"
+        <Label Text="Dossiers utilisés pour rechercher les photos"
                FontAttributes="Bold"
                FontSize="Medium" />
 
-    <!-- Liste des dossiers -->
-    <CollectionView x:Name="FoldersList"
+        <!-- Liste des dossiers -->
+        <CollectionView x:Name="FoldersList"
                         HeightRequest="200"
                         SelectionMode="Single">
-      <CollectionView.ItemTemplate>
-        <DataTemplate>
-          <HorizontalStackLayout Spacing="10" Padding="5">
-            <Label Text="{Binding}" VerticalOptions="Center" />
-          </HorizontalStackLayout>
-        </DataTemplate>
-      </CollectionView.ItemTemplate>
-    </CollectionView>
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <HorizontalStackLayout Spacing="10" Padding="5">
+                <Label Text="{Binding}" VerticalOptions="Center" />
+              </HorizontalStackLayout>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
 
-    <!-- Saisie manuelle (pour l'instant) -->
-    <Entry x:Name="FolderEntry"
+        <!-- Saisie manuelle (pour l'instant) -->
+        <Entry x:Name="FolderEntry"
                Placeholder="Chemin du dossier (temporaire)" />
 
-    <HorizontalStackLayout Spacing="10">
-      <Button Text="Ajouter"
-                    Clicked="OnAddFolderClicked" />
-      <Button Text="Supprimer sélection"
-                    Clicked="OnRemoveFolderClicked" />
-    </HorizontalStackLayout>
+        <HorizontalStackLayout Spacing="10">
+          <Button Text="Ajouter"
+                  Clicked="OnAddFolderClicked" />
+          <Button Text="Supprimer sélection"
+                  Clicked="OnRemoveFolderClicked" />
+        </HorizontalStackLayout>
 
-    <Button Text="Sauvegarder"
-                Clicked="OnSaveClicked"
+        <BoxView HeightRequest="1" Color="#DDDDDD" />
+
+        <Label Text="pCloud"
+               FontAttributes="Bold"
+               FontSize="Medium" />
+
+        <Entry x:Name="PCloudUserEntry"
+               Placeholder="Email ou nom d'utilisateur pCloud" />
+
+        <Frame HasShadow="False"
+               CornerRadius="10"
+               Padding="0"
+               BorderColor="#DDDDDD"
+               BackgroundColor="#F8F8F8">
+          <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+            <Entry x:Name="PCloudPasswordEntry"
+                   Grid.Column="0"
+                   Placeholder="Mot de passe pCloud"
+                   IsPassword="True"
+                   Margin="12,10,0,10"
+                   BackgroundColor="Transparent" />
+            <ImageButton x:Name="PasswordVisibilityButton"
+                         Grid.Column="1"
+                         Source="icon_eye_closed.svg"
+                         Clicked="OnTogglePasswordVisibilityClicked"
+                         BackgroundColor="Transparent"
+                         Padding="10"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center"
+                         SemanticProperties.Hint="Afficher ou masquer le mot de passe" />
+          </Grid>
+        </Frame>
+
+        <Entry x:Name="PCloudRootEntry"
+               Placeholder="Dossier racine pCloud pour les albums (ex: /Photos)" />
+
+        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+          <Switch
+              x:Name="DefaultMoveSwitch"
+              IsToggled="True" />
+          <Label
+              Text="Deplacer les photos vers pCloud par defaut"
+              VerticalOptions="Center" />
+        </HorizontalStackLayout>
+
+        <Label x:Name="PCloudErrorLabel"
+               TextColor="Red"
+               FontSize="Small"
+               IsVisible="False" />
+
+        <Button Text="Sauvegarder"
+                Clicked="OnSaveAllClicked"
                 BackgroundColor="DodgerBlue"
                 TextColor="White" />
 
-    <BoxView HeightRequest="1" Color="#DDDDDD" />
+      </VerticalStackLayout>
+    </ScrollView.Content>
+  </ScrollView>
 
-    <Label Text="pCloud"
-           FontAttributes="Bold"
-           FontSize="Medium" />
-
-    <Entry x:Name="PCloudUserEntry"
-           Placeholder="Email ou nom d'utilisateur pCloud" />
-
-    <Entry x:Name="PCloudPasswordEntry"
-           Placeholder="Mot de passe pCloud"
-           IsPassword="True" />
-
-    <Entry x:Name="PCloudRootEntry"
-           Placeholder="Dossier racine pCloud pour les albums (ex: /Photos)" />
-
-    <Label x:Name="PCloudErrorLabel"
-           TextColor="Red"
-           FontSize="Small"
-           IsVisible="False" />
-
-    <Button Text="Sauvegarder pCloud"
-            Clicked="OnSavePCloudClicked"
-            BackgroundColor="DodgerBlue"
-            TextColor="White" />
-
-  </VerticalStackLayout>
 </ContentPage>

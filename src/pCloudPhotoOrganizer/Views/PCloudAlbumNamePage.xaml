@@ -15,6 +15,8 @@
     <Entry
         x:Name="AlbumNameEntry"
         Keyboard="Text"
+        ReturnType="Done"
+        Completed="OnAlbumNameCompleted"
         ClearButtonVisibility="WhileEditing" />
 
     <HorizontalStackLayout Spacing="10" VerticalOptions="Center">

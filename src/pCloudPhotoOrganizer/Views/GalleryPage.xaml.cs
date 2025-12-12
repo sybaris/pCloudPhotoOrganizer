@@ -36,14 +36,16 @@ public partial class GalleryPage : ContentPage
     private readonly PCloudFileService _fileService;
     private readonly SettingsService _settings;
     private readonly MediaDeletionService _deletionService;
+    private readonly AppLogService _logService;
 
-    public GalleryPage(GalleryViewModel vm, PCloudFileService fileService, PCloudAuthService authService, SettingsService settings, MediaDeletionService deletionService)
+    public GalleryPage(GalleryViewModel vm, PCloudFileService fileService, PCloudAuthService authService, SettingsService settings, MediaDeletionService deletionService, AppLogService logService)
     {
         InitializeComponent();
         _vm = vm;
         _fileService = fileService;
         _settings = settings;
         _deletionService = deletionService;
+        _logService = logService;
         BindingContext = _vm;
         _ = authService; // kept for DI compatibility
         Debug.WriteLine($"[GalleryPage] ctor, VM instance={_vm.GetHashCode()}");
@@ -71,10 +73,10 @@ public partial class GalleryPage : ContentPage
         if (_vm.SelectedItems is null || _vm.SelectedItems.Count == 0)
         {
             await DisplayAlert("pCloud", "Sélectionnez au moins une photo avant d'envoyer vers pCloud.", "OK");
+            await _logService.LogInfo("Tentative d'envoi vers pCloud sans sélection.");
             return;
         }
 
-        // Déterminer la date de base pour le nom de dossier
         var distinctDates = _vm.SelectedItems
             .Select(i => i.DateTaken.Date)
             .Distinct()
@@ -82,30 +84,29 @@ public partial class GalleryPage : ContentPage
             .ToList();
 
         DateTime baseDate = distinctDates.Count == 1
-            ? distinctDates[0]          // une seule date → on la prend
-            : distinctDates.First();    // plusieurs dates → on prend la plus ancienne
+            ? distinctDates[0]
+            : distinctDates.First();
 
         string suggestedName = $"{baseDate:yyyy.MM.dd} - ";
+        var defaultMoveMode = _settings.GetDefaultMoveMode();
 
-        // Ouvrir une page modale avec un Entry et le curseur à la fin du texte
         var tcs = new TaskCompletionSource<PCloudAlbumSelection?>();
-        var popup = new PCloudAlbumNamePage(suggestedName, tcs);
+        var popup = new PCloudAlbumNamePage(suggestedName, defaultMoveMode, tcs);
         await Navigation.PushModalAsync(popup);
 
         var selection = await tcs.Task;
 
         if (selection is null || string.IsNullOrWhiteSpace(selection.AlbumName))
         {
-            // Annulé ou vide → on ne fait rien
+            await _logService.LogInfo("Envoi vers pCloud annulé depuis la boîte de dialogue d'album.");
             return;
         }
 
-
-        // POC : on affiche simplement ce qui serait envoyé
         var (user, password, root) = await GetPCloudCredentialsAsync();
         if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password))
         {
             await DisplayAlert("pCloud", "Renseignez vos identifiants pCloud dans les paramètres.", "OK");
+            await _logService.LogInfo("Envoi vers pCloud interrompu : identifiants manquants.");
             return;
         }
 
@@ -115,6 +116,8 @@ public partial class GalleryPage : ContentPage
         _vm.UploadStatus = "Préparation de l'upload...";
 
         var itemsToDelete = new List<MediaItem>();
+        var batchStopwatch = Stopwatch.StartNew();
+        await _logService.LogInfo($"Début d'envoi de {_vm.SelectedItems.Count} fichier(s) vers '{targetPath}' (déplacement={selection.MoveFiles}).");
 
         try
         {
@@ -133,7 +136,19 @@ public partial class GalleryPage : ContentPage
                     _vm.UploadStatus = $"Upload {index}/{total} : {item.DisplayName} ({p:P0})";
                 });
 
-                await _fileService.UploadAsync(user!, password!, targetPath, item, progress);
+                var fileStopwatch = Stopwatch.StartNew();
+                try
+                {
+                    await _fileService.UploadAsync(user!, password!, targetPath, item, progress);
+                    fileStopwatch.Stop();
+                    await _logService.LogOperation($"Copie '{item.DisplayName ?? item.FileName ?? item.FilePath}' -> '{targetPath}' en {fileStopwatch.Elapsed.TotalSeconds:F2}s.");
+                }
+                catch (Exception ex)
+                {
+                    fileStopwatch.Stop();
+                    await _logService.LogError(ex, $"Erreur durant l'upload de '{item.DisplayName ?? item.FileName ?? item.FilePath}' vers '{targetPath}'.");
+                    throw;
+                }
 
                 if (selection.MoveFiles)
                 {
@@ -141,28 +156,40 @@ public partial class GalleryPage : ContentPage
                 }
             }
 
+            batchStopwatch.Stop();
+            await _logService.LogOperation($"Copié {total} fichier(s) vers '{targetPath}' en {batchStopwatch.Elapsed.TotalSeconds:F2}s.");
+
             _vm.UploadStatus = selection.MoveFiles ? "Déplacement terminé" : "Upload terminé";
             await DisplayAlert("pCloud", "Envoi terminé !", "OK");
         }
-        catch (PCloudAuthenticationException)
+        catch (PCloudAuthenticationException ex)
         {
+            batchStopwatch.Stop();
             _vm.UploadStatus = "Identifiants pCloud invalides";
+            await _logService.LogError(ex, "Identifiants pCloud invalides (WebDAV ou API).");
             await DisplayAlert("pCloud", "Identifiants pCloud invalides. Vérifiez votre login/mot de passe.", "OK");
         }
         catch (PCloudUploadException ex)
         {
+            batchStopwatch.Stop();
             _vm.UploadStatus = "Echec de l'upload vers pCloud";
+            await _logService.LogError(ex, $"Erreur HTTP {(int)ex.StatusCode} durant l'upload vers '{targetPath}'.");
             await DisplayAlert("pCloud", $"Échec du téléversement (HTTP {(int)ex.StatusCode}) : {ex.ResponseBody}", "OK");
         }
         catch (Exception ex)
         {
+            batchStopwatch.Stop();
+            await _logService.LogError(ex, "Erreur inattendue durant l'envoi vers pCloud.");
             await DisplayAlert("pCloud", $"Erreur durant l'envoi : {ex.Message}", "OK");
         }
         finally
         {
             if (selection.MoveFiles && itemsToDelete.Count > 0)
             {
+                var deleteStopwatch = Stopwatch.StartNew();
                 await _deletionService.DeleteAsync(itemsToDelete);
+                deleteStopwatch.Stop();
+                await _logService.LogOperation($"Suppression locale de {itemsToDelete.Count} fichier(s) en {deleteStopwatch.Elapsed.TotalSeconds:F2}s.");
             }
 
             _vm.IsUploading = false;

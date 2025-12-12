@@ -1,5 +1,5 @@
+using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using pCloudPhotoOrganizer.Services;
 
 namespace pCloudPhotoOrganizer.Views;
@@ -7,6 +7,7 @@ namespace pCloudPhotoOrganizer.Views;
 public partial class SettingsPage : ContentPage
 {
     private readonly SettingsService _settings;
+    private bool _isPasswordVisible;
 
     public ObservableCollection<string> Folders { get; } = new();
 
@@ -14,6 +15,7 @@ public partial class SettingsPage : ContentPage
     {
         InitializeComponent();
         _settings = settings;
+        UpdatePasswordVisibilityIcon();
 
         foreach (var folder in _settings.GetSelectedFolders())
         {
@@ -30,10 +32,12 @@ public partial class SettingsPage : ContentPage
         var username = await _settings.GetPCloudUsernameAsync();
         var password = await _settings.GetPCloudPasswordAsync();
         var root = _settings.GetPCloudRootFolder();
+        var defaultMoveMode = _settings.GetDefaultMoveMode();
 
         PCloudUserEntry.Text = username;
         PCloudPasswordEntry.Text = password;
         PCloudRootEntry.Text = root;
+        DefaultMoveSwitch.IsToggled = defaultMoveMode;
     }
 
     private void OnAddFolderClicked(object sender, EventArgs e)
@@ -56,37 +60,48 @@ public partial class SettingsPage : ContentPage
         }
     }
 
-    private async void OnSaveClicked(object sender, EventArgs e)
-    {
-        _settings.SaveSelectedFolders(Folders);
-        await DisplayAlert("Paramètres", "Les dossiers ont été sauvegardés.", "OK");
-    }
-
-    private async void OnSavePCloudClicked(object sender, EventArgs e)
+    private async void OnSaveAllClicked(object sender, EventArgs e)
     {
         var user = PCloudUserEntry.Text?.Trim() ?? string.Empty;
         var password = PCloudPasswordEntry.Text?.Trim() ?? string.Empty;
         var root = PCloudRootEntry.Text?.Trim() ?? string.Empty;
+        var hasPCloudInput = !string.IsNullOrWhiteSpace(user) ||
+                             !string.IsNullOrWhiteSpace(password) ||
+                             !string.IsNullOrWhiteSpace(root);
 
-        if (string.IsNullOrWhiteSpace(user))
+        _settings.SaveSelectedFolders(Folders);
+        _settings.SaveDefaultMoveMode(DefaultMoveSwitch.IsToggled);
+
+        if (hasPCloudInput && string.IsNullOrWhiteSpace(user))
         {
             ShowPCloudError("L'identifiant pCloud est requis.");
+            await DisplayAlert("pCloud", "L'identifiant pCloud est requis.", "OK");
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(password))
+        if (hasPCloudInput && string.IsNullOrWhiteSpace(password))
         {
             ShowPCloudError("Le mot de passe pCloud est requis.");
+            await DisplayAlert("pCloud", "Le mot de passe pCloud est requis.", "OK");
             return;
         }
 
         ClearPCloudError();
 
-        await _settings.SavePCloudUsernameAsync(user);
-        _settings.SavePCloudRootFolder(root);
-        await _settings.SavePCloudPasswordAsync(password);
+        if (hasPCloudInput)
+        {
+            await _settings.SavePCloudUsernameAsync(user);
+            _settings.SavePCloudRootFolder(root);
+            await _settings.SavePCloudPasswordAsync(password);
+        }
+        else
+        {
+            await _settings.SavePCloudUsernameAsync(string.Empty);
+            _settings.SavePCloudRootFolder(string.Empty);
+            await _settings.SavePCloudPasswordAsync(string.Empty);
+        }
 
-        await DisplayAlert("pCloud", "Identifiants pCloud sauvegardés.", "OK");
+        await DisplayAlert("ParamŠtres", "Les paramŠtres ont ‚t‚ sauvegard‚s.", "OK");
     }
 
     private void ShowPCloudError(string message)
@@ -99,5 +114,19 @@ public partial class SettingsPage : ContentPage
     {
         PCloudErrorLabel.IsVisible = false;
         PCloudErrorLabel.Text = string.Empty;
+    }
+
+    private void OnTogglePasswordVisibilityClicked(object sender, EventArgs e)
+    {
+        _isPasswordVisible = !_isPasswordVisible;
+        PCloudPasswordEntry.IsPassword = !_isPasswordVisible;
+        UpdatePasswordVisibilityIcon();
+    }
+
+    private void UpdatePasswordVisibilityIcon()
+    {
+        var source = _isPasswordVisible ? "icon_eye_open.svg" : "icon_eye_closed.svg";
+        PasswordVisibilityButton.Source = source;
+        SemanticProperties.SetDescription(PasswordVisibilityButton, _isPasswordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe");
     }
 }
