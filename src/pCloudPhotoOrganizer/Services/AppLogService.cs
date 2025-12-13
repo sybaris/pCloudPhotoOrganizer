@@ -90,7 +90,7 @@ public class AppLogService
 
     private async Task WriteAsync(string level, string message)
     {
-        var timestamp = DateTimeOffset.Now.ToString("O");
+        var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:ss");
         var entry = $"{timestamp} [{level}] {message}" + Environment.NewLine;
 
         var entered = false;

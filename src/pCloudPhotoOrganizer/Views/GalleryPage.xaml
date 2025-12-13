@@ -12,7 +12,11 @@
                  Priority="0"
                  Order="Primary"
                  SemanticProperties.Description="Actualiser la galerie" />
-    <ToolbarItem Text="Vers pCloud" Clicked="OnSendToPCloudClicked" />
+    <ToolbarItem IconImageSource="icon_transfer.svg"
+                 Clicked="OnSendToPCloudClicked"
+                 Priority="1"
+                 Order="Primary"
+                 SemanticProperties.Description="Vers pCloud" />
   </maui:ContentPage.ToolbarItems>
 
   <Grid RowDefinitions="Auto,*">
@@ -192,7 +196,6 @@
           </Grid>
         </DataTemplate>
       </CollectionView.ItemTemplate>
-
 
       <!-- Grille 3 colonnes -->
       <CollectionView.ItemsLayout>
