@@ -19,8 +19,6 @@ public class MediaItem : INotifyPropertyChanged
 
     public long? Length { get; set; }
 
-    public bool HasPersistablePermission { get; set; }
-
     public DateTime DateTaken { get; set; }
 
     public ImageSource? Thumbnail { get; set; }

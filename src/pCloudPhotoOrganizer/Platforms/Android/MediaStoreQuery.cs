@@ -8,6 +8,8 @@ namespace pCloudPhotoOrganizer.Platforms.Android;
 
 public static class MediaStoreQuery
 {
+    private static readonly string DcimRoot = "/storage/emulated/0/dcim/";
+
     public static IEnumerable<(AndroidUri contentUri, string displayName, long dateTaken, long? size)> QueryImages(Context context)
     {
         var contentResolver = context.ContentResolver;
@@ -23,7 +25,8 @@ public static class MediaStoreQuery
             MediaStore.Images.Media.InterfaceConsts.Id,
             MediaStore.Images.Media.InterfaceConsts.DisplayName,
             MediaStore.Images.Media.InterfaceConsts.DateTaken,
-            MediaStore.Images.Media.InterfaceConsts.Size
+            MediaStore.Images.Media.InterfaceConsts.Size,
+            MediaStore.Images.Media.InterfaceConsts.Data,
         };
 
         using var cursor = contentResolver.Query(uri, projection, null, null, $"{MediaStore.Images.Media.InterfaceConsts.DateTaken} DESC");
@@ -33,9 +36,15 @@ public static class MediaStoreQuery
         int nameIndex = cursor.GetColumnIndex(projection[1]);
         int dateIndex = cursor.GetColumnIndex(projection[2]);
         int sizeIndex = cursor.GetColumnIndex(projection[3]);
+        int pathIdx = cursor.GetColumnIndex(projection[4]);
 
         while (cursor.MoveToNext())
         {
+            string? path = cursor.GetString(pathIdx);
+
+            if (!IsInDcim(path))
+                continue; // On ignore les dossiers hors DCIM
+
             var id = cursor.GetLong(idIndex);
             AndroidUri contentUri = ContentUris.WithAppendedId(uri, id);
 
@@ -50,5 +59,16 @@ public static class MediaStoreQuery
                 size
             );
         }
+    }
+
+    private static bool IsInDcim(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        path = path.Replace("\\", "/").ToLowerInvariant();
+
+        // Test strict : doit commencer par /dcim
+        return path.StartsWith(DcimRoot);
     }
 }

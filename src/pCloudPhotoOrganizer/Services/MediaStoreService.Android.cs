@@ -41,28 +41,28 @@ public class MediaStoreService
 
             var dt = DateTimeOffset.FromUnixTimeMilliseconds(date).DateTime;
             var systemUri = new Uri(uriString);
-            var persistableTaken = false;
-
-            try
-            {
-                contentResolver.TakePersistableUriPermission(contentUri, ActivityFlags.GrantReadUriPermission);
-                persistableTaken = true;
-                Log.Info("MediaStoreService", $"Persistable read permission granted for {contentUri}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warn("MediaStoreService", $"Persistable permission FAILED for {contentUri}: {ex.Message}");
-            }
 
             ImageSource? thumbnail = null;
-            try
+            byte[]? thumbnailBuffer = null;
+            Log.Info("MediaStoreService", $"Thumbnail stream attempt {name} uri={uriString} size={size}");
+
+            using var inputStream = contentResolver.OpenInputStream(contentUri);
+            if (inputStream is not null)
             {
-                thumbnail = ImageSource.FromStream(() => contentResolver.OpenInputStream(contentUri) ?? Stream.Null);
+                using var ms = new MemoryStream();
+                await inputStream.CopyToAsync(ms);
+                thumbnailBuffer = ms.ToArray();
             }
-            catch
+
+            if (thumbnailBuffer is not null && thumbnailBuffer.Length > 0)
             {
-                // Ignore thumbnail errors; upload still possible via content resolver.
+                thumbnail = ImageSource.FromStream(() => new MemoryStream(thumbnailBuffer));
             }
+
+            if (thumbnail is null)
+                throw new Exception($"Thumbnail is null for {name}, URI = {systemUri} ");
+
+            Log.Info("MediaStoreService", $"Thumbnail ready {name}: source={(thumbnail?.GetType().Name ?? "null")}");
 
             items.Add(new MediaItem
             {
@@ -70,8 +70,7 @@ public class MediaStoreService
                 FileName = name,
                 DateTaken = dt,
                 Thumbnail = thumbnail,
-                Length = size,
-                HasPersistablePermission = persistableTaken
+                Length = size
             });
         }
 

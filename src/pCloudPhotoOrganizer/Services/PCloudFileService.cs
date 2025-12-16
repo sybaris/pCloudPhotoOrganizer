@@ -161,9 +161,8 @@ public class PCloudFileService
         catch (Exception ex)
         {
             var permissionStatus = await MediaPermissionHelper.GetMediaPermissionStatusAsync();
-            _logger.LogError(ex, "Ouverture du flux de media impossible pour {ContentUri} (persistable={Persistable}, runtimePermission={PermissionStatus}): {ErrorMessage}",
+            _logger.LogError(ex, "Ouverture du flux de media impossible pour {ContentUri} (runtimePermission={PermissionStatus}): {ErrorMessage}",
                 item.ContentUri,
-                item.HasPersistablePermission,
                 permissionStatus,
                 ex.Message);
             throw;
