@@ -89,35 +89,40 @@ public class GalleryViewModel : BaseViewModel
 
         Debug.WriteLine($"[GalleryViewModel] LoadAsync start (force={force})");
         IsLoading = true;
-
-        UnhookAllGroups();
-        Groups.Clear();
-        SelectedItems.Clear();
-
-        var medias = await _mediaService.GetAllMediaAsync();
-
-        var groups = medias
-            .GroupBy(x => x.DateTaken.Date)
-            .OrderByDescending(g => g.Key);
-
-        foreach (var g in groups)
+        try
         {
-            // On s'assure que chaque item est désélectionné au chargement
-            foreach (var item in g)
-                item.IsSelected = false;
+            UnhookAllGroups();
+            Groups.Clear();
+            SelectedItems.Clear();
 
-            var group = new MediaGroup(
-                title: g.Key.ToString("yyyy-MM-dd"),
-                date: g.Key,
-                items: g.ToList());
+            var medias = await _mediaService.GetAllMediaAsync();
 
-            HookGroup(group);
-            Groups.Add(group);
+            var groups = medias
+                .GroupBy(x => x.DateTaken.Date)
+                .OrderByDescending(g => g.Key);
+
+            foreach (var g in groups)
+            {
+                // On s'assure que chaque item est désélectionné au chargement
+                foreach (var item in g)
+                    item.IsSelected = false;
+
+                var group = new MediaGroup(
+                    title: g.Key.ToString("yyyy-MM-dd"),
+                    date: g.Key,
+                    items: g.ToList());
+
+                HookGroup(group);
+                Groups.Add(group);
+            }
+
+            OnPropertyChanged(nameof(IsEmpty));
+        }
+        finally
+        {
+            IsLoading = false;
         }
 
-        OnPropertyChanged(nameof(IsEmpty));
-
-        IsLoading = false;
         _hasLoadedOnce = true;
         Debug.WriteLine("[GalleryViewModel] LoadAsync end");
     }
