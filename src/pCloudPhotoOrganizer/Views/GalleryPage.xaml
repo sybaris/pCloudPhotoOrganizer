@@ -25,7 +25,7 @@
       <Label Text="{Binding UploadStatus}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
     </StackLayout>
 
-    <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading}" Command="{Binding RefreshCommand}">
+    <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading, Mode=OneWay}" Command="{Binding RefreshCommand}">
       <CollectionView
               x:Name="GalleryCollectionView"
               ItemsSource="{Binding Groups}"
