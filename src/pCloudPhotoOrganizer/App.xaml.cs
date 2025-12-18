@@ -16,7 +16,9 @@ namespace pCloudPhotoOrganizer
         private readonly SettingsService _settings;
         private AppShell? _rootShell;
         private Window? _rootWindow;
+#if ANDROID
         private bool _startupPermissionsRequested;
+#endif
 
         public App(SettingsService settings)
         {
