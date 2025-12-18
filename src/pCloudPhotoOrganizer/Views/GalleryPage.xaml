@@ -7,6 +7,7 @@
     xmlns:maui="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     xmlns:viewmodels="clr-namespace:pCloudPhotoOrganizer.ViewModels"
     xmlns:models="clr-namespace:pCloudPhotoOrganizer.Models"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
     Title="Gallery"
     BackgroundColor="White">
   <maui:ContentPage.ToolbarItems>
@@ -50,30 +51,33 @@
       <!-- En-tête de groupe (date) -->
       <CollectionView.GroupHeaderTemplate>
         <DataTemplate>
-          <StackLayout Padding="5,10"
-                 BackgroundColor="#EEEEEE"
-                 Orientation="Horizontal"
-                 HorizontalOptions="Fill"
-                 VerticalOptions="Center">
+          <Grid Padding="5,10"
+                BackgroundColor="#EEEEEE"
+                ColumnDefinitions="*,Auto"
+                ColumnSpacing="10"
+                VerticalOptions="Center">
 
             <!-- Date / titre du groupe -->
-            <Label Text="{Binding Title}"
-             FontAttributes="Bold"
-             FontSize="Medium"
-             VerticalOptions="Center"
-             HorizontalOptions="StartAndExpand" />
+            <Label Grid.Column="0"
+                   Text="{Binding Title}"
+                   FontAttributes="Bold"
+                   FontSize="Medium"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Start" />
 
             <!-- Bouton de sélection pour toute la date -->
-            <Frame
-          HasShadow="False"
-          CornerRadius="15"
-          Padding="0"
-          WidthRequest="30"
-          HeightRequest="30"
-          BackgroundColor="#80FFFFFF"
-          BorderColor="LightGray"
-          HorizontalOptions="End"
-          VerticalOptions="Center">
+            <Border Grid.Column="1"
+                    Padding="0"
+                    WidthRequest="30"
+                    HeightRequest="30"
+                    BackgroundColor="#80FFFFFF"
+                    Stroke="LightGray"
+                    StrokeThickness="1"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center">
+              <Border.StrokeShape>
+                <shapes:RoundRectangle CornerRadius="15" />
+              </Border.StrokeShape>
 
               <Label
             Text=""
@@ -101,33 +105,33 @@
                 </Label.Triggers>
               </Label>
 
-              <Frame.Triggers>
+              <Border.Triggers>
                 <!-- Groupe entièrement sélectionné -->
-                <DataTrigger TargetType="Frame"
+                <DataTrigger TargetType="Border"
                        Binding="{Binding IsAllSelected}"
                        Value="True">
                   <Setter Property="BackgroundColor" Value="DodgerBlue" />
-                  <Setter Property="BorderColor" Value="DodgerBlue" />
+                  <Setter Property="Stroke" Value="DodgerBlue" />
                 </DataTrigger>
 
                 <!-- Groupe non entièrement sélectionné -->
-                <DataTrigger TargetType="Frame"
+                <DataTrigger TargetType="Border"
                        Binding="{Binding IsAllSelected}"
                        Value="False">
                   <Setter Property="BackgroundColor" Value="#80FFFFFF" />
-                  <Setter Property="BorderColor" Value="LightGray" />
+                  <Setter Property="Stroke" Value="LightGray" />
                 </DataTrigger>
-              </Frame.Triggers>
+              </Border.Triggers>
 
               <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
-              <Frame.GestureRecognizers>
+              <Border.GestureRecognizers>
                 <TapGestureRecognizer
-                  Command="{Binding Source={x:Reference GalleryPageRoot}, Path=BindingContext.ToggleGroupSelectCommand}"
+                  Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleGroupSelectCommand}"
                   CommandParameter="{Binding .}" />
-              </Frame.GestureRecognizers>
-            </Frame>
+              </Border.GestureRecognizers>
+            </Border>
 
-          </StackLayout>
+          </Grid>
         </DataTemplate>
       </CollectionView.GroupHeaderTemplate>
 
@@ -135,9 +139,11 @@
       <CollectionView.ItemTemplate>
         <DataTemplate>
           <Grid Padding="2">
-            <Frame HasShadow="False"
-                   CornerRadius="5"
-                   Padding="0">
+            <Border Padding="0"
+                    StrokeThickness="0">
+              <Border.StrokeShape>
+                <shapes:RoundRectangle CornerRadius="5" />
+              </Border.StrokeShape>
               <Grid>
 
                 <!-- La photo -->
@@ -152,12 +158,14 @@
     VerticalOptions="Start"
     Margin="4">
 
-                  <Frame x:Name="SelectionCircle"
-           HasShadow="False"
-           CornerRadius="15"
-           Padding="0"
-           BackgroundColor="#80FFFFFF"
-           BorderColor="LightGray">
+                  <Border x:Name="SelectionCircle"
+                          Padding="0"
+                          BackgroundColor="#80FFFFFF"
+                          Stroke="LightGray"
+                          StrokeThickness="1">
+                    <Border.StrokeShape>
+                      <shapes:RoundRectangle CornerRadius="15" />
+                    </Border.StrokeShape>
 
                     <Label x:Name="SelectionLabel"
                Text=""
@@ -176,26 +184,26 @@
                       </Label.Triggers>
                     </Label>
 
-                    <Frame.Triggers>
-                      <DataTrigger TargetType="Frame"
+                    <Border.Triggers>
+                      <DataTrigger TargetType="Border"
                          Binding="{Binding IsSelected}"
                          Value="True">
                         <Setter Property="BackgroundColor" Value="DodgerBlue" />
-                        <Setter Property="BorderColor" Value="DodgerBlue" />
+                        <Setter Property="Stroke" Value="DodgerBlue" />
                       </DataTrigger>
-                    </Frame.Triggers>
+                    </Border.Triggers>
 
-                    <Frame.GestureRecognizers>
+                    <Border.GestureRecognizers>
                       <TapGestureRecognizer
-                Command="{Binding Source={x:Reference GalleryPageRoot}, Path=BindingContext.ToggleSelectCommand}"
+                Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleSelectCommand}"
                 CommandParameter="{Binding .}" />
-                    </Frame.GestureRecognizers>
-                  </Frame>
+                    </Border.GestureRecognizers>
+                  </Border>
                 </Grid>
 
 
               </Grid>
-            </Frame>
+            </Border>
           </Grid>
         </DataTemplate>
       </CollectionView.ItemTemplate>
