@@ -1,5 +1,6 @@
 #if ANDROID
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.Util;
 using Microsoft.Maui.ApplicationModel;
@@ -94,7 +95,7 @@ public static class MediaPermissionHelper
     {
         try
         {
-            var page = pageProvider?.Invoke() ?? Application.Current?.MainPage;
+            var page = pageProvider?.Invoke() ?? Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page is null)
                 return Task.CompletedTask;
 

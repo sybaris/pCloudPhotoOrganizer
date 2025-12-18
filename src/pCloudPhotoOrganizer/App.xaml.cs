@@ -14,49 +14,66 @@ namespace pCloudPhotoOrganizer
     public partial class App : Application
     {
         private readonly SettingsService _settings;
+        private AppShell? _rootShell;
+        private Window? _rootWindow;
+        private bool _startupPermissionsRequested;
 
         public App(SettingsService settings)
         {
             InitializeComponent();
             _settings = settings;
-
-            MainPage = new AppShell();
-
-            // Si aucun dossier n'est configure, on ouvre directement la page Parametres
-            if (!_settings.AreFoldersConfigured())
-            {
-                // Route "settings" definie dans AppShell.xaml
-                (MainPage as Shell)?.GoToAsync("//settings");
-            }
-
-#if ANDROID
-            MainThread.BeginInvokeOnMainThread(async () =>
-            {
-                try
-                {
-                    await MediaPermissionHelper.EnsureStartupPermissionsAsync(() => MainPage);
-                }
-                catch (Exception)
-                {
-                    // The helper already shows a friendly message and logs details.
-                }
-            });
-#endif
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            var window = base.CreateWindow(activationState);
+            var shell = new AppShell();
+            _rootShell = shell;
 
-#if WINDOWS
-            window.Created += (s, e) =>
-            {
-                window.SetMobilePortraitSize();
-            };
+            var window = new Window(shell);
+            _rootWindow = window;
+
+            InitializeRootNavigation(shell);
+            InitializePlatformHooks(window);
+
+#if ANDROID
+            RequestAndroidStartupPermissions();
 #endif
 
             return window;
         }
+
+        private void InitializeRootNavigation(Shell shell)
+        {
+            if (_settings.AreFoldersConfigured())
+                return;
+
+            shell.Dispatcher.Dispatch(() => _ = shell.GoToAsync("//settings"));
+        }
+
+        private void InitializePlatformHooks(Window window)
+        {
+#if WINDOWS
+            window.Created += (s, e) => window.SetMobilePortraitSize();
+#endif
+        }
+
+#if ANDROID
+        private void RequestAndroidStartupPermissions()
+        {
+            if (_startupPermissionsRequested)
+                return;
+
+            _startupPermissionsRequested = true;
+
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await MediaPermissionHelper.EnsureStartupPermissionsAsync(GetActivePage);
+            });
+        }
+#endif
+
+        private Page? GetActivePage()
+            => _rootWindow?.Page ?? Windows.FirstOrDefault()?.Page ?? _rootShell;
     }
 }
 
