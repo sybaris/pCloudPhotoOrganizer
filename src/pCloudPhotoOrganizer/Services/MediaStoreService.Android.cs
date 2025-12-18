@@ -10,6 +10,13 @@ namespace pCloudPhotoOrganizer.Services;
 
 public class MediaStoreService
 {
+    private readonly SettingsService _settingsService;
+
+    public MediaStoreService(SettingsService settingsService)
+    {
+        _settingsService = settingsService;
+    }
+
     public async Task<List<MediaItem>> GetAllMediaAsync()
     {
         var context = Android.App.Application.Context;
@@ -22,9 +29,17 @@ public class MediaStoreService
             return new List<MediaItem>();
         }
 
+        // Récupérer les dossiers configurés
+        var allowedFolders = _settingsService.GetSelectedFolders();
+        if (!allowedFolders.Any())
+        {
+            Log.Warn("MediaStoreService", "Aucun dossier configuré dans les paramètres.");
+            return new List<MediaItem>();
+        }
+
         var items = new List<MediaItem>();
 
-        foreach (var (contentUri, name, date, size) in MediaStoreQuery.QueryImages(context))
+        foreach (var (contentUri, name, date, size) in MediaStoreQuery.QueryImages(context, allowedFolders))
         {
             if (contentUri is null)
             {

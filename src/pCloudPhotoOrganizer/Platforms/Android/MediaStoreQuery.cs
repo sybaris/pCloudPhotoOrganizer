@@ -8,9 +8,7 @@ namespace pCloudPhotoOrganizer.Platforms.Android;
 
 public static class MediaStoreQuery
 {
-    private static readonly string DcimRoot = "/storage/emulated/0/dcim/";
-
-    public static IEnumerable<(AndroidUri contentUri, string displayName, long dateTaken, long? size)> QueryImages(Context context)
+    public static IEnumerable<(AndroidUri contentUri, string displayName, long dateTaken, long? size)> QueryImages(Context context, IEnumerable<string> allowedFolders)
     {
         var contentResolver = context.ContentResolver;
         if (contentResolver is null)
@@ -18,6 +16,16 @@ public static class MediaStoreQuery
 
         var uri = MediaStore.Images.Media.ExternalContentUri;
         if (uri is null)
+            yield break;
+
+        // Normaliser les dossiers autorisés une seule fois
+        var normalizedFolders = allowedFolders
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Select(f => f.Replace("\\", "/").ToLowerInvariant())
+            .ToList();
+
+        // Si aucun dossier n'est configuré, ne rien retourner
+        if (!normalizedFolders.Any())
             yield break;
 
         string[] projection =
@@ -42,8 +50,8 @@ public static class MediaStoreQuery
         {
             string? path = cursor.GetString(pathIdx);
 
-            if (!IsInDcim(path))
-                continue; // On ignore les dossiers hors DCIM
+            if (!IsInAllowedFolders(path, normalizedFolders))
+                continue; // On ignore les dossiers non autorisés
 
             var id = cursor.GetLong(idIndex);
             AndroidUri contentUri = ContentUris.WithAppendedId(uri, id);
@@ -61,14 +69,14 @@ public static class MediaStoreQuery
         }
     }
 
-    private static bool IsInDcim(string? path)
+    private static bool IsInAllowedFolders(string? path, List<string> normalizedFolders)
     {
         if (string.IsNullOrWhiteSpace(path))
             return false;
 
         path = path.Replace("\\", "/").ToLowerInvariant();
 
-        // Test strict : doit commencer par /dcim
-        return path.StartsWith(DcimRoot);
+        // Vérifier si le chemin commence par l'un des dossiers autorisés
+        return normalizedFolders.Any(folder => path.StartsWith(folder));
     }
 }

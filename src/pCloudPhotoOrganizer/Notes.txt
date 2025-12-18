@@ -1,4 +1,5 @@
-﻿📷 Photos prises avec l’appareil photo
+📷 Photos prises avec l’appareil photo
+/storage/emulated/0/dcim/
 /storage/emulated/0/DCIM/Camera
 📸 Captures d’écran de l’appareil
 /storage/emulated/0/Pictures/Screenshots
