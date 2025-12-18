@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <maui:ContentPage
     x:Class="pCloudPhotoOrganizer.Views.GalleryPage"
+    x:Name="GalleryPageRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:maui="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
+    xmlns:viewmodels="clr-namespace:pCloudPhotoOrganizer.ViewModels"
+    xmlns:models="clr-namespace:pCloudPhotoOrganizer.Models"
+    x:DataType="viewmodels:GalleryViewModel"
     Title="Gallery"
     BackgroundColor="White">
   <maui:ContentPage.ToolbarItems>
@@ -46,7 +50,7 @@
 
       <!-- En-tête de groupe (date) -->
       <CollectionView.GroupHeaderTemplate>
-        <DataTemplate>
+        <DataTemplate x:DataType="models:MediaGroup">
           <StackLayout Padding="5,10"
                  BackgroundColor="#EEEEEE"
                  Orientation="Horizontal"
@@ -119,7 +123,7 @@
               <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
               <Frame.GestureRecognizers>
                 <TapGestureRecognizer
-                  Command="{Binding Source={x:Reference GalleryCollectionView}, Path=BindingContext.ToggleGroupSelectCommand}"
+                  Command="{Binding Source={x:Reference GalleryPageRoot}, Path=ViewModel.ToggleGroupSelectCommand}"
                   CommandParameter="{Binding .}" />
               </Frame.GestureRecognizers>
             </Frame>
@@ -130,7 +134,7 @@
 
       <!-- Miniatures avec bouton de sélection en haut à droite -->
       <CollectionView.ItemTemplate>
-        <DataTemplate>
+        <DataTemplate x:DataType="models:MediaItem">
           <Grid Padding="2">
             <Frame HasShadow="False"
                    CornerRadius="5"
@@ -184,7 +188,7 @@
 
                     <Frame.GestureRecognizers>
                       <TapGestureRecognizer
-                Command="{Binding Source={x:Reference GalleryCollectionView}, Path=BindingContext.ToggleSelectCommand}"
+                Command="{Binding Source={x:Reference GalleryPageRoot}, Path=ViewModel.ToggleSelectCommand}"
                 CommandParameter="{Binding .}" />
                     </Frame.GestureRecognizers>
                   </Frame>

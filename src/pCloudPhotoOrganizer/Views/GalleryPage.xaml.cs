@@ -38,10 +38,12 @@ public partial class GalleryPage : ContentPage
     private readonly MediaDeletionService _deletionService;
     private readonly AppLogService _logService;
 
+    public GalleryViewModel ViewModel => _vm;
+
     public GalleryPage(GalleryViewModel vm, PCloudFileService fileService, PCloudAuthService authService, SettingsService settings, MediaDeletionService deletionService, AppLogService logService)
     {
-        InitializeComponent();
         _vm = vm;
+        InitializeComponent();
         _fileService = fileService;
         _settings = settings;
         _deletionService = deletionService;

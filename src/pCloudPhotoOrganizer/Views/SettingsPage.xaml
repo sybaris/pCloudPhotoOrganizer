@@ -3,6 +3,7 @@
     x:Class="pCloudPhotoOrganizer.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sys="clr-namespace:System;assembly=netstandard"
     Title="Paramètres">
 
   <ScrollView>
@@ -18,9 +19,9 @@
                         HeightRequest="200"
                         SelectionMode="Single">
           <CollectionView.ItemTemplate>
-            <DataTemplate>
+            <DataTemplate x:DataType="sys:String">
               <HorizontalStackLayout Spacing="10" Padding="5">
-                <Label Text="{Binding}" VerticalOptions="Center" />
+                <Label Text="{Binding .}" VerticalOptions="Center" />
               </HorizontalStackLayout>
             </DataTemplate>
           </CollectionView.ItemTemplate>
