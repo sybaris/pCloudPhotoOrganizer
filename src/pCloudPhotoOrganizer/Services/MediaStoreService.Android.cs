@@ -50,7 +50,7 @@ public class MediaStoreService
             if (inputStream is not null)
             {
                 using var ms = new MemoryStream();
-                await inputStream.CopyToAsync(ms);
+                inputStream.CopyTo(ms);
                 thumbnailBuffer = ms.ToArray();
             }
 
