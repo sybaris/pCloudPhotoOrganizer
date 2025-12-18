@@ -7,7 +7,6 @@
     xmlns:maui="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     xmlns:viewmodels="clr-namespace:pCloudPhotoOrganizer.ViewModels"
     xmlns:models="clr-namespace:pCloudPhotoOrganizer.Models"
-    x:DataType="viewmodels:GalleryViewModel"
     Title="Gallery"
     BackgroundColor="White">
   <maui:ContentPage.ToolbarItems>
@@ -50,7 +49,7 @@
 
       <!-- En-tête de groupe (date) -->
       <CollectionView.GroupHeaderTemplate>
-        <DataTemplate x:DataType="models:MediaGroup">
+        <DataTemplate>
           <StackLayout Padding="5,10"
                  BackgroundColor="#EEEEEE"
                  Orientation="Horizontal"
@@ -134,7 +133,7 @@
 
       <!-- Miniatures avec bouton de sélection en haut à droite -->
       <CollectionView.ItemTemplate>
-        <DataTemplate x:DataType="models:MediaItem">
+        <DataTemplate>
           <Grid Padding="2">
             <Frame HasShadow="False"
                    CornerRadius="5"
