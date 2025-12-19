@@ -138,4 +138,9 @@ public partial class PCloudAlbumNamePage : ContentPage
 
         _tcs.TrySetResult(result);
     }
+
+    private void OnMoveOptionTapped(object sender, TappedEventArgs e)
+    {
+        MoveCheckBox.IsChecked = !MoveCheckBox.IsChecked;
+    }
 }

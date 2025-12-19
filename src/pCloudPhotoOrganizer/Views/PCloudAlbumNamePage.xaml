@@ -25,7 +25,11 @@
           IsChecked="True" />
       <Label
           Text="Move photos instead of copying"
-          VerticalOptions="Center" />
+          VerticalOptions="Center">
+        <Label.GestureRecognizers>
+          <TapGestureRecognizer Tapped="OnMoveOptionTapped" />
+        </Label.GestureRecognizers>
+      </Label>
     </HorizontalStackLayout>
 
     <Label
