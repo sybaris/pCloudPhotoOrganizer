@@ -4,12 +4,16 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Logs">
-  <VerticalStackLayout Padding="20" Spacing="15">
-    <Label Text="Journal d'activité"
+  <Grid Padding="20"
+        RowSpacing="15"
+        RowDefinitions="Auto,Auto,Auto,*">
+    <Label Grid.Row="0"
+           Text="Journal d'activité"
            FontAttributes="Bold"
            FontSize="Medium" />
 
-    <HorizontalStackLayout Spacing="10">
+    <HorizontalStackLayout Grid.Row="1"
+                           Spacing="10">
       <Button Text="Rafraîchir"
               Clicked="OnRefreshLogsClicked"
               CornerRadius="8" />
@@ -20,26 +24,30 @@
               TextColor="#333333" />
     </HorizontalStackLayout>
 
-    <Label x:Name="LogsStatusLabel"
+    <Label Grid.Row="2"
+           x:Name="LogsStatusLabel"
            FontSize="Small"
            TextColor="Gray"
            Text="Chargement..." />
 
-    <Frame HasShadow="False"
-           BorderColor="#DDDDDD"
-           BackgroundColor="#F9F9F9"
-           CornerRadius="12"
-           Padding="0"
-           VerticalOptions="FillAndExpand"
-           HeightRequest="280">
+    <Border Grid.Row="3"
+            Stroke="#DDDDDD"
+            BackgroundColor="#F9F9F9"
+            StrokeThickness="1"
+            HeightRequest="280"
+            Padding="0">
+      <Border.StrokeShape>
+        <RoundRectangle CornerRadius="12" />
+      </Border.StrokeShape>
       <Editor x:Name="LogsEditor"
               IsReadOnly="True"
               AutoSize="TextChanges"
               FontFamily="Courier New"
               TextColor="#222222"
               BackgroundColor="Transparent"
-              VerticalOptions="FillAndExpand"
+              VerticalOptions="Fill"
+              HorizontalOptions="Fill"
               Text="" />
-    </Frame>
-  </VerticalStackLayout>
+    </Border>
+  </Grid>
 </ContentPage>
