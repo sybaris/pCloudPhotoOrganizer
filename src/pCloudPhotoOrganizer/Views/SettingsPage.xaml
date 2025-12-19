@@ -47,11 +47,13 @@
         <Entry x:Name="PCloudUserEntry"
                Placeholder="Email ou nom d'utilisateur pCloud" />
 
-        <Frame HasShadow="False"
-               CornerRadius="10"
-               Padding="0"
-               BorderColor="#DDDDDD"
-               BackgroundColor="#F8F8F8">
+        <Border Stroke="#DDDDDD"
+                BackgroundColor="#F8F8F8"
+                StrokeThickness="1"
+                Padding="0">
+          <Border.StrokeShape>
+            <RoundRectangle CornerRadius="10" />
+          </Border.StrokeShape>
           <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
             <Entry x:Name="PCloudPasswordEntry"
                    Grid.Column="0"
@@ -69,7 +71,7 @@
                          VerticalOptions="Center"
                          SemanticProperties.Hint="Afficher ou masquer le mot de passe" />
           </Grid>
-        </Frame>
+        </Border>
 
         <Entry x:Name="PCloudRootEntry"
                Placeholder="Dossier racine pCloud pour les albums (ex: /Photos)" />
