@@ -16,7 +16,7 @@
 
         <!-- Liste des dossiers -->
         <CollectionView x:Name="FoldersList"
-                        HeightRequest="200"
+                        HeightRequest="150"
                         SelectionMode="Single">
           <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="sys:String">

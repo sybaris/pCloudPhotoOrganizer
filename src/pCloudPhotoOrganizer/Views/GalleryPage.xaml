@@ -6,67 +6,68 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:maui="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     xmlns:viewmodels="clr-namespace:pCloudPhotoOrganizer.ViewModels"
+    xmlns:sysInput="clr-namespace:System.Windows.Input;assembly=netstandard"
     xmlns:models="clr-namespace:pCloudPhotoOrganizer.Models"
-    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"    
     Title="Gallery"
     BackgroundColor="White">
-  <maui:ContentPage.ToolbarItems>
-    <ToolbarItem IconImageSource="icon_refresh.svg"
+    <maui:ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="icon_refresh.svg"
                  Command="{Binding RefreshCommand}"
                  Priority="0"
                  Order="Primary"
                  SemanticProperties.Description="Actualiser la galerie" />
-    <ToolbarItem IconImageSource="icon_transfer.svg"
+        <ToolbarItem IconImageSource="icon_transfer.svg"
                  Clicked="OnSendToPCloudClicked"
                  Priority="1"
                  Order="Primary"
                  SemanticProperties.Description="Vers pCloud" />
-  </maui:ContentPage.ToolbarItems>
+    </maui:ContentPage.ToolbarItems>
 
-  <Grid RowDefinitions="Auto,*">
-    <StackLayout Orientation="Horizontal" Padding="10,5" Spacing="10" IsVisible="{Binding IsUploading}">
-      <ActivityIndicator IsRunning="{Binding IsUploading}" VerticalOptions="Center" />
-      <Label Text="{Binding UploadStatus}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
-    </StackLayout>
+    <Grid RowDefinitions="Auto,*">
+        <StackLayout Orientation="Horizontal" Padding="10,5" Spacing="10" IsVisible="{Binding IsUploading}">
+            <ActivityIndicator IsRunning="{Binding IsUploading}" VerticalOptions="Center" />
+            <Label Text="{Binding UploadStatus}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+        </StackLayout>
 
-    <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading, Mode=OneWay}" Command="{Binding RefreshCommand}">
-      <CollectionView
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading, Mode=OneWay}" Command="{Binding RefreshCommand}">
+            <CollectionView
               x:Name="GalleryCollectionView"
               ItemsSource="{Binding Groups}"
               IsGrouped="True"
               SelectionMode="None"
               Margin="10">
 
-      <!-- Vue quand il n’y a aucune photo -->
-      <CollectionView.EmptyView>
-        <Grid>
-          <Label Text="Aucune photo trouvée"
+                <!-- Vue quand il n’y a aucune photo -->
+                <CollectionView.EmptyView>
+                    <Grid>
+                        <Label Text="Aucune photo trouvée"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
                            FontSize="Medium"
                            TextColor="Gray" />
-        </Grid>
-      </CollectionView.EmptyView>
+                    </Grid>
+                </CollectionView.EmptyView>
 
-      <!-- En-tête de groupe (date) -->
-      <CollectionView.GroupHeaderTemplate>
-        <DataTemplate>
-          <Grid Padding="5,10"
+                <!-- En-tête de groupe (date) -->
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="models:MediaGroup">
+                        <Grid Padding="5,10"
                 BackgroundColor="#EEEEEE"
                 ColumnDefinitions="*,Auto"
                 ColumnSpacing="10"
                 VerticalOptions="Center">
 
-            <!-- Date / titre du groupe -->
-            <Label Grid.Column="0"
+                            <!-- Date / titre du groupe -->
+                            <Label Grid.Column="0"
                    Text="{Binding Title}"
                    FontAttributes="Bold"
                    FontSize="Medium"
                    VerticalOptions="Center"
                    HorizontalOptions="Start" />
 
-            <!-- Bouton de sélection pour toute la date -->
-            <Border Grid.Column="1"
+                            <!-- Bouton de sélection pour toute la date -->
+                            <Border Grid.Column="1"
                     Padding="0"
                     WidthRequest="30"
                     HeightRequest="30"
@@ -75,145 +76,147 @@
                     StrokeThickness="1"
                     HorizontalOptions="End"
                     VerticalOptions="Center">
-              <Border.StrokeShape>
-                <shapes:RoundRectangle CornerRadius="15" />
-              </Border.StrokeShape>
+                                <Border.StrokeShape>
+                                    <shapes:RoundRectangle CornerRadius="15" />
+                                </Border.StrokeShape>
 
-              <Label
+                                <Label
             Text=""
             HorizontalOptions="Center"
             VerticalOptions="Center"
             FontSize="14"
             FontAttributes="Bold"
             TextColor="Transparent">
-                <Label.Triggers>
-                  <!-- Quand TOUT le groupe est sélectionné -->
-                  <DataTrigger TargetType="Label"
+                                    <Label.Triggers>
+                                        <!-- Quand TOUT le groupe est sélectionné -->
+                                        <DataTrigger TargetType="Label"
                          Binding="{Binding IsAllSelected}"
                          Value="True">
-                    <Setter Property="Text" Value="✓" />
-                    <Setter Property="TextColor" Value="White" />
-                  </DataTrigger>
+                                            <Setter Property="Text" Value="✓" />
+                                            <Setter Property="TextColor" Value="White" />
+                                        </DataTrigger>
 
-                  <!-- Quand le groupe n'est pas entièrement sélectionné -->
-                  <DataTrigger TargetType="Label"
+                                        <!-- Quand le groupe n'est pas entièrement sélectionné -->
+                                        <DataTrigger TargetType="Label"
                          Binding="{Binding IsAllSelected}"
                          Value="False">
-                    <Setter Property="Text" Value="" />
-                    <Setter Property="TextColor" Value="Transparent" />
-                  </DataTrigger>
-                </Label.Triggers>
-              </Label>
+                                            <Setter Property="Text" Value="" />
+                                            <Setter Property="TextColor" Value="Transparent" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
 
-              <Border.Triggers>
-                <!-- Groupe entièrement sélectionné -->
-                <DataTrigger TargetType="Border"
+                                <Border.Triggers>
+                                    <!-- Groupe entièrement sélectionné -->
+                                    <DataTrigger TargetType="Border"
                        Binding="{Binding IsAllSelected}"
                        Value="True">
-                  <Setter Property="BackgroundColor" Value="DodgerBlue" />
-                  <Setter Property="Stroke" Value="DodgerBlue" />
-                </DataTrigger>
+                                        <Setter Property="BackgroundColor" Value="DodgerBlue" />
+                                        <Setter Property="Stroke" Value="DodgerBlue" />
+                                    </DataTrigger>
 
-                <!-- Groupe non entièrement sélectionné -->
-                <DataTrigger TargetType="Border"
+                                    <!-- Groupe non entièrement sélectionné -->
+                                    <DataTrigger TargetType="Border"
                        Binding="{Binding IsAllSelected}"
                        Value="False">
-                  <Setter Property="BackgroundColor" Value="#80FFFFFF" />
-                  <Setter Property="Stroke" Value="LightGray" />
-                </DataTrigger>
-              </Border.Triggers>
+                                        <Setter Property="BackgroundColor" Value="#80FFFFFF" />
+                                        <Setter Property="Stroke" Value="LightGray" />
+                                    </DataTrigger>
+                                </Border.Triggers>
 
-              <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
-              <Border.GestureRecognizers>
-                <TapGestureRecognizer
-                  Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleGroupSelectCommand}"
-                  CommandParameter="{Binding .}" />
-              </Border.GestureRecognizers>
-            </Border>
+                                <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                  x:DataType="{x:Type sysInput:ICommand}"
+                                  Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleGroupSelectCommand}"
+                                  CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                            </Border>
 
-          </Grid>
-        </DataTemplate>
-      </CollectionView.GroupHeaderTemplate>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
 
-      <!-- Miniatures avec bouton de sélection en haut à droite -->
-      <CollectionView.ItemTemplate>
-        <DataTemplate>
-          <Grid Padding="2">
-            <Border Padding="0"
+                <!-- Miniatures avec bouton de sélection en haut à droite -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="2">
+                            <Border Padding="0"
                     StrokeThickness="0">
-              <Border.StrokeShape>
-                <shapes:RoundRectangle CornerRadius="5" />
-              </Border.StrokeShape>
-              <Grid>
+                                <Border.StrokeShape>
+                                    <shapes:RoundRectangle CornerRadius="5" />
+                                </Border.StrokeShape>
+                                <Grid>
 
-                <!-- La photo -->
-                <Image Source="{Binding Thumbnail}"
+                                    <!-- La photo -->
+                                    <Image Source="{Binding Thumbnail}"
                            Aspect="AspectFill" />
 
-                <!-- Bouton de sélection (toujours visible) -->
-                <Grid
+                                    <!-- Bouton de sélection (toujours visible) -->
+                                    <Grid
     WidthRequest="30"
     HeightRequest="30"
     HorizontalOptions="End"
     VerticalOptions="Start"
     Margin="4">
 
-                  <Border x:Name="SelectionCircle"
+                                        <Border x:Name="SelectionCircle"
                           Padding="0"
                           BackgroundColor="#80FFFFFF"
                           Stroke="LightGray"
                           StrokeThickness="1">
-                    <Border.StrokeShape>
-                      <shapes:RoundRectangle CornerRadius="15" />
-                    </Border.StrokeShape>
+                                            <Border.StrokeShape>
+                                                <shapes:RoundRectangle CornerRadius="15" />
+                                            </Border.StrokeShape>
 
-                    <Label x:Name="SelectionLabel"
+                                            <Label x:Name="SelectionLabel"
                Text=""
                HorizontalOptions="Center"
                VerticalOptions="Center"
                FontSize="14"
                FontAttributes="Bold"
                TextColor="Transparent">
-                      <Label.Triggers>
-                        <DataTrigger TargetType="Label"
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
                              Binding="{Binding IsSelected}"
                              Value="True">
-                          <Setter Property="Text" Value="✓" />
-                          <Setter Property="TextColor" Value="White" />
-                        </DataTrigger>
-                      </Label.Triggers>
-                    </Label>
+                                                        <Setter Property="Text" Value="✓" />
+                                                        <Setter Property="TextColor" Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
 
-                    <Border.Triggers>
-                      <DataTrigger TargetType="Border"
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border"
                          Binding="{Binding IsSelected}"
                          Value="True">
-                        <Setter Property="BackgroundColor" Value="DodgerBlue" />
-                        <Setter Property="Stroke" Value="DodgerBlue" />
-                      </DataTrigger>
-                    </Border.Triggers>
+                                                    <Setter Property="BackgroundColor" Value="DodgerBlue" />
+                                                    <Setter Property="Stroke" Value="DodgerBlue" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
 
-                    <Border.GestureRecognizers>
-                      <TapGestureRecognizer
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                x:DataType="{x:Type sysInput:ICommand}"
                 Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleSelectCommand}"
                 CommandParameter="{Binding .}" />
-                    </Border.GestureRecognizers>
-                  </Border>
-                </Grid>
+                                            </Border.GestureRecognizers>
+                                        </Border>
+                                    </Grid>
 
 
-              </Grid>
-            </Border>
-          </Grid>
-        </DataTemplate>
-      </CollectionView.ItemTemplate>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
 
-      <!-- Grille 3 colonnes -->
-      <CollectionView.ItemsLayout>
-        <GridItemsLayout Orientation="Vertical" Span="3" />
-      </CollectionView.ItemsLayout>
+                <!-- Grille 3 colonnes -->
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="3" />
+                </CollectionView.ItemsLayout>
 
-      </CollectionView>
-    </RefreshView>
-  </Grid>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
 </maui:ContentPage>
