@@ -8,11 +8,11 @@ on:
   pull_request:
 
 env:
-  DOTNET_VERSION: 8.0.404
+  DOTNET_VERSION: 9.0.x
   CONFIGURATION: Release
   SOLUTION_PATH: src/pCloudPhotoOrganizer/pCloudPhotoOrganizer.sln
-  ANDROID_TFM: net8.0-android
-  WINDOWS_TFM: net8.0-windows10.0.19041.0
+  ANDROID_TFM: net9.0-android35.0
+  WINDOWS_TFM: net9.0-windows10.0.19041.0
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -22,29 +22,23 @@ jobs:
     name: Build Windows (MSIX/AppxBundle)
     runs-on: windows-latest
     steps:
-      # Grab the repository contents
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install .NET 8 SDK for MAUI
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # Install the full MAUI workload (includes Windows tooling)
       - name: Install MAUI workload
         run: dotnet workload install maui
 
-      # Restore only the Windows target to avoid pulling unsupported TFMs on this runner
       - name: Restore packages (Windows TFM)
         run: dotnet restore ${{ env.SOLUTION_PATH }} -p:TargetFramework=${{ env.WINDOWS_TFM }}
 
-      # Publish an unsigned MSIX/AppxBundle for Windows
       - name: Publish Windows package
         run: dotnet publish ${{ env.SOLUTION_PATH }} -f ${{ env.WINDOWS_TFM }} -c ${{ env.CONFIGURATION }} -p:WindowsPackageType=msix -p:AppxPackageSigningEnabled=false
 
-      # Upload the produced Windows installer artifacts
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -58,45 +52,36 @@ jobs:
     name: Build Android (APK + AAB)
     runs-on: ubuntu-latest
     steps:
-      # Grab the repository contents
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install .NET 8 SDK for MAUI
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # Java 17 is required for Android tooling
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: microsoft
           java-version: "17"
 
-      # Ensure Android SDK/NDK components used by MAUI are available
       - name: Install Android SDK components
         run: |
-          yes | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "platform-tools" "build-tools;34.0.0" "ndk;26.1.10909125"
+          yes | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "platform-tools" "build-tools;35.0.0" "ndk;26.1.10909125"
 
-      # Install only the Android-specific MAUI workload to keep the image lean
       - name: Install MAUI Android workload
         run: dotnet workload install maui-android
 
-      # Restore only the Android target to avoid pulling unsupported TFMs on this runner
       - name: Restore packages (Android TFM)
         run: dotnet restore ${{ env.SOLUTION_PATH }} -p:TargetFramework=${{ env.ANDROID_TFM }}
 
-      # Publish an unsigned APK (good for device installs)
       - name: Publish Android APK
         run: dotnet publish ${{ env.SOLUTION_PATH }} -f ${{ env.ANDROID_TFM }} -c ${{ env.CONFIGURATION }} -p:AndroidPackageFormat=apk -p:AndroidSignPackage=false
 
-      # Publish an unsigned Android App Bundle (for Play upload/signing later)
       - name: Publish Android AAB
         run: dotnet publish ${{ env.SOLUTION_PATH }} -f ${{ env.ANDROID_TFM }} -c ${{ env.CONFIGURATION }} -p:AndroidPackageFormat=aab -p:AndroidSignPackage=false
 
-      # Upload the APK artifact
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
@@ -104,7 +89,6 @@ jobs:
           if-no-files-found: error
           path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/**/*.apk
 
-      # Upload the AAB artifact
       - name: Upload Android AAB
         uses: actions/upload-artifact@v4
         with:
