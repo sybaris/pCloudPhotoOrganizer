@@ -1,12 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>
-            net9.0-android35.0;
-            net9.0-ios18.0;
-            net9.0-maccatalyst18.0
-        </TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
+        <!-- TFM par défaut : Android uniquement -->
+        <TargetFrameworks>net9.0-android35.0</TargetFrameworks>
+        
         <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
         <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
 
@@ -42,9 +39,21 @@
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
     </PropertyGroup>
+    <!-- Windows -->
+    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
+        <TargetFrameworks>
+            net9.0-android35.0;
+            net9.0-windows10.0.19041.0
+        </TargetFrameworks>
+    </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
-      <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+    <!-- macOS uniquement -->
+    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
+        <TargetFrameworks>
+            net9.0-android35.0;
+            net9.0-ios18.0;
+            net9.0-maccatalyst18.0
+        </TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
