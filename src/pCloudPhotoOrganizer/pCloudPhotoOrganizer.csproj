@@ -81,13 +81,19 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Update="Views\AlbumNameDialog.xaml.cs">
+        <DependentUpon>AlbumNameDialog.xaml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
         <MauiXaml Update="Views\LogsPage.xaml">
           <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="Views\SettingsPage.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
-        <MauiXaml Update="Views\PCloudAlbumNamePage.xaml">
+        <MauiXaml Update="Views\AlbumNameDialog.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
     </ItemGroup>

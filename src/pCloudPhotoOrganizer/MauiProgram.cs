@@ -24,6 +24,7 @@ namespace pCloudPhotoOrganizer
             builder.Services.AddSingleton<PCloudFileService>();
             builder.Services.AddSingleton<SettingsService>();
             builder.Services.AddSingleton<MediaDeletionService>();
+            builder.Services.AddSingleton<LocalExportService>();
             //builder.Services.AddSingleton<ThumbnailCacheService>();
 
             // ViewModels

@@ -5,12 +5,12 @@ using pCloudPhotoOrganizer.Models;
 
 namespace pCloudPhotoOrganizer.Views;
 
-public partial class PCloudAlbumNamePage : ContentPage
+public partial class AlbumNameDialog : ContentPage
 {
     private readonly TaskCompletionSource<PCloudAlbumSelection?> _tcs;
     private readonly bool _defaultMoveMode;
 
-    public PCloudAlbumNamePage(string suggestedName, bool defaultMoveMode, TaskCompletionSource<PCloudAlbumSelection?> tcs)
+    public AlbumNameDialog(string suggestedName, bool defaultMoveMode, TaskCompletionSource<PCloudAlbumSelection?> tcs)
     {
         InitializeComponent();
 

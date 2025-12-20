@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -45,6 +46,10 @@ public class GalleryViewModel : BaseViewModel
     public ObservableCollection<MediaGroup> Groups { get; } = new();
 
     public ObservableCollection<MediaItem> SelectedItems { get; } = new();
+
+    public bool HasSelection => SelectedItems.Count > 0;
+
+    public System.Collections.Generic.IReadOnlyList<MediaItem> GetSelectionSnapshot() => SelectedItems.ToList();
 
     public bool IsEmpty => Groups.Count == 0;
 
@@ -182,6 +187,7 @@ public class GalleryViewModel : BaseViewModel
         }
 
         Debug.WriteLine($"[GalleryViewModel] SelectedItems count={SelectedItems.Count} (item={item.DisplayName}, selected={item.IsSelected})");
+        OnPropertyChanged(nameof(HasSelection));
     }
 
     private void UnhookAllGroups()

@@ -35,17 +35,19 @@ public partial class GalleryPage : ContentPage
     private readonly GalleryViewModel _vm;
     private readonly PCloudFileService _fileService;
     private readonly SettingsService _settings;
+    private readonly LocalExportService _localExportService;
     private readonly MediaDeletionService _deletionService;
     private readonly AppLogService _logService;
 
     public GalleryViewModel ViewModel => _vm;
 
-    public GalleryPage(GalleryViewModel vm, PCloudFileService fileService, PCloudAuthService authService, SettingsService settings, MediaDeletionService deletionService, AppLogService logService)
+    public GalleryPage(GalleryViewModel vm, PCloudFileService fileService, PCloudAuthService authService, SettingsService settings, LocalExportService localExportService, MediaDeletionService deletionService, AppLogService logService)
     {
         _vm = vm;
         InitializeComponent();
         _fileService = fileService;
         _settings = settings;
+        _localExportService = localExportService;
         _deletionService = deletionService;
         _logService = logService;
         BindingContext = _vm;
@@ -74,36 +76,95 @@ public partial class GalleryPage : ContentPage
     {
         if (_vm.SelectedItems is null || _vm.SelectedItems.Count == 0)
         {
-            await DisplayAlert("pCloud", "Sélectionnez au moins une photo avant d'envoyer vers pCloud.", "OK");
-            await _logService.LogInfo("Tentative d'envoi vers pCloud sans sélection.");
+            await DisplayAlert("Sélection", "Sélectionnez au moins une photo avant de faire un transfert.", "OK");
+            await _logService.LogInfo("Tentative de transfert sans sélection.");
             return;
         }
 
-        var distinctDates = _vm.SelectedItems
-            .Select(i => i.DateTaken.Date)
-            .Distinct()
-            .OrderBy(d => d)
-            .ToList();
+        var selectionSnapshot = _vm.SelectedItems.ToList();
 
-        DateTime baseDate = distinctDates.Count == 1
-            ? distinctDates[0]
-            : distinctDates.First();
+        var selection = await AlbumNameDialogPopup(selectionSnapshot);
+        if (selection == null)
+            return;
 
-        string suggestedName = $"{baseDate:yyyy.MM.dd} - ";
-        var defaultMoveMode = _settings.GetDefaultMoveMode();
+        var exportMode = _settings.GetExportMode();
 
-        var tcs = new TaskCompletionSource<PCloudAlbumSelection?>();
-        var popup = new PCloudAlbumNamePage(suggestedName, defaultMoveMode, tcs);
-        await Navigation.PushModalAsync(popup);
+        if (exportMode == ExportMode.Local)
+            await ExportLocallyAsync(selectionSnapshot, selection);
+        else
+            await ExportToPCloudAsync(selectionSnapshot, selection);
+    }
 
-        var selection = await tcs.Task;
+    private async Task ExportLocallyAsync(List<MediaItem> selectedItems, PCloudAlbumSelection selection)
+    {
+        bool moveFiles = _settings.GetDefaultMoveMode();
+        _vm.IsUploading = true;
+        _vm.UploadStatus = "Préparation de l'export local...";
+        var batchStopwatch = Stopwatch.StartNew();
 
-        if (selection is null || string.IsNullOrWhiteSpace(selection.AlbumName))
+        try
         {
-            await _logService.LogInfo("Envoi vers pCloud annulé depuis la boîte de dialogue d'album.");
-            return;
-        }
+            await _logService.LogInfo($"Début d'export local de {selectedItems.Count} fichier(s) (déplacement={moveFiles}).");
 
+            int total = selectedItems.Count;
+            int index = 0;
+
+            foreach (var item in selectedItems)
+            {
+                index++;
+                var itemLabel = item.DisplayName ?? item.FileName ?? item.FilePath ?? "media";
+                _vm.UploadStatus = $"Export local {index}/{total} : {itemLabel}";
+
+                var fileStopwatch = Stopwatch.StartNew();
+                try
+                {
+                    if (moveFiles)
+                    {
+                        await _localExportService.MoveAsync(item);
+                    }
+                    else
+                    {
+                        await _localExportService.CopyAsync(item);
+                    }
+
+                    fileStopwatch.Stop();
+                    await _logService.LogOperation($"Export local '{itemLabel}' en {fileStopwatch.Elapsed.TotalSeconds:F2}s.");
+                }
+                catch (Exception ex)
+                {
+                    fileStopwatch.Stop();
+                    await _logService.LogError(ex, $"Erreur durant l'export local de '{itemLabel}'.");
+                    throw;
+                }
+            }
+
+            batchStopwatch.Stop();
+            await _logService.LogOperation($"Export local terminé ({total} fichier(s)) en {batchStopwatch.Elapsed.TotalSeconds:F2}s.");
+            _vm.UploadStatus = moveFiles ? "Déplacement local terminé" : "Copie locale terminée";
+            await DisplayAlert("Export local", moveFiles ? "Déplacement local terminé !" : "Copie locale terminée !", "OK");
+        }
+        catch (InvalidOperationException ex)
+        {
+            batchStopwatch.Stop();
+            _vm.UploadStatus = "Configuration locale invalide";
+            await _logService.LogError(ex, "Paramètres d'export local invalides.");
+            await DisplayAlert("Export local", ex.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            batchStopwatch.Stop();
+            _vm.UploadStatus = "Echec de l'export local";
+            await _logService.LogError(ex, "Erreur inattendue durant l'export local.");
+            await DisplayAlert("Export local", $"Erreur durant l'export local : {ex.Message}", "OK");
+        }
+        finally
+        {
+            _vm.IsUploading = false;
+        }
+    }
+
+    private async Task ExportToPCloudAsync(List<MediaItem> selectedItems, PCloudAlbumSelection selection)
+    {
         var (user, password, root) = await GetPCloudCredentialsAsync();
         if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password))
         {
@@ -119,16 +180,16 @@ public partial class GalleryPage : ContentPage
 
         var itemsToDelete = new List<MediaItem>();
         var batchStopwatch = Stopwatch.StartNew();
-        await _logService.LogInfo($"Début d'envoi de {_vm.SelectedItems.Count} fichier(s) vers '{targetPath}' (déplacement={selection.MoveFiles}).");
+        await _logService.LogInfo($"Début d'envoi de {selectedItems.Count} fichier(s) vers '{targetPath}' (déplacement={selection.MoveFiles}).");
 
         try
         {
             await _fileService.EnsureFolderExistsAsync(user!, password!, targetPath);
 
-            int total = _vm.SelectedItems.Count;
+            int total = selectedItems.Count;
             int index = 0;
 
-            foreach (var item in _vm.SelectedItems.ToList())
+            foreach (var item in selectedItems)
             {
                 index++;
                 _vm.UploadStatus = $"Upload {index}/{total} : {item.DisplayName}";
@@ -196,6 +257,35 @@ public partial class GalleryPage : ContentPage
 
             _vm.IsUploading = false;
         }
+    }
+
+    private async Task<PCloudAlbumSelection?> AlbumNameDialogPopup(List<MediaItem> selectedItems)
+    {
+        var distinctDates = selectedItems
+            .Select(i => i.DateTaken.Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        DateTime baseDate = distinctDates.Count == 1
+            ? distinctDates[0]
+            : distinctDates.First();
+
+        string suggestedName = $"{baseDate:yyyy.MM.dd} - ";
+        var defaultMoveMode = _settings.GetDefaultMoveMode();
+
+        var tcs = new TaskCompletionSource<PCloudAlbumSelection?>();
+        var popup = new AlbumNameDialog(suggestedName, defaultMoveMode, tcs);
+        await Navigation.PushModalAsync(popup);
+
+        PCloudAlbumSelection? selection = await tcs.Task;
+        if (selection is null || string.IsNullOrWhiteSpace(selection.AlbumName))
+        {
+            await _logService.LogInfo("Transfert annulé depuis la boîte de dialogue d'album.");
+            return null;
+        }
+
+        return selection;
     }
 
     private async Task<(string? user, string? password, string? root)> GetPCloudCredentialsAsync()
