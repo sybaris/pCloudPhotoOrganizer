@@ -116,7 +116,7 @@ public partial class SettingsPage : ContentPage
             await _settings.SavePCloudPasswordAsync(string.Empty);
         }
 
-        await DisplayAlert("ParamŠtres", "Les paramŠtres ont ‚t‚ sauvegard‚s.", "OK");
+        await DisplayAlert("Paramêtres", "Les paramêtres ont été sauvegardés.", "OK");
     }
 
     private void OnExportModeChanged(object sender, CheckedChangedEventArgs e)
