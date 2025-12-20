@@ -8,6 +8,9 @@ public partial class SettingsPage : ContentPage
 {
     private readonly SettingsService _settings;
     private bool _isPasswordVisible;
+    private ExportMode _exportMode = ExportMode.PCloud;
+    private Border? _pCloudGroupBox;
+    private Border? _localGroupBox;
 
     public ObservableCollection<string> Folders { get; } = new();
 
@@ -16,6 +19,8 @@ public partial class SettingsPage : ContentPage
         InitializeComponent();
         _settings = settings;
         UpdatePasswordVisibilityIcon();
+        _pCloudGroupBox = this.FindByName<Border>("PCloudGroupBox");
+        _localGroupBox = this.FindByName<Border>("LocalGroupBox");
 
         foreach (var folder in _settings.GetSelectedFolders())
         {
@@ -33,11 +38,18 @@ public partial class SettingsPage : ContentPage
         var password = await _settings.GetPCloudPasswordAsync();
         var root = _settings.GetPCloudRootFolder();
         var defaultMoveMode = _settings.GetDefaultMoveMode();
+        var exportMode = _settings.GetExportMode();
+        var localPath = _settings.GetLocalExportPath();
 
         PCloudUserEntry.Text = username;
         PCloudPasswordEntry.Text = password;
         PCloudRootEntry.Text = root;
         DefaultMoveSwitch.IsToggled = defaultMoveMode;
+        LocalPathEntry.Text = localPath;
+        ExportModePCloudRadio.IsChecked = exportMode == ExportMode.PCloud;
+        ExportModeLocalRadio.IsChecked = exportMode == ExportMode.Local;
+
+        ApplyExportMode(exportMode);
     }
 
     private void OnAddFolderClicked(object sender, EventArgs e)
@@ -65,12 +77,15 @@ public partial class SettingsPage : ContentPage
         var user = PCloudUserEntry.Text?.Trim() ?? string.Empty;
         var password = PCloudPasswordEntry.Text?.Trim() ?? string.Empty;
         var root = PCloudRootEntry.Text?.Trim() ?? string.Empty;
+        var localPath = LocalPathEntry.Text?.Trim() ?? string.Empty;
         var hasPCloudInput = !string.IsNullOrWhiteSpace(user) ||
                              !string.IsNullOrWhiteSpace(password) ||
                              !string.IsNullOrWhiteSpace(root);
 
         _settings.SaveSelectedFolders(Folders);
         _settings.SaveDefaultMoveMode(DefaultMoveSwitch.IsToggled);
+        _settings.SaveExportMode(_exportMode);
+        _settings.SaveLocalExportPath(localPath);
 
         if (hasPCloudInput && string.IsNullOrWhiteSpace(user))
         {
@@ -104,6 +119,21 @@ public partial class SettingsPage : ContentPage
         await DisplayAlert("ParamŠtres", "Les paramŠtres ont ‚t‚ sauvegard‚s.", "OK");
     }
 
+    private void OnExportModeChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (!e.Value)
+            return;
+
+        if (sender == ExportModePCloudRadio)
+        {
+            ApplyExportMode(ExportMode.PCloud);
+        }
+        else if (sender == ExportModeLocalRadio)
+        {
+            ApplyExportMode(ExportMode.Local);
+        }
+    }
+
     private void ShowPCloudError(string message)
     {
         PCloudErrorLabel.Text = message;
@@ -128,5 +158,30 @@ public partial class SettingsPage : ContentPage
         var source = _isPasswordVisible ? "icon_eye_open.svg" : "icon_eye_closed.svg";
         PasswordVisibilityButton.Source = source;
         SemanticProperties.SetDescription(PasswordVisibilityButton, _isPasswordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe");
+    }
+
+    private void ApplyExportMode(ExportMode mode)
+    {
+        _exportMode = mode;
+        var isPCloud = mode == ExportMode.PCloud;
+
+        _pCloudGroupBox ??= this.FindByName<Border>("PCloudGroupBox");
+        if (_pCloudGroupBox is not null)
+        {
+            _pCloudGroupBox.IsEnabled = isPCloud;
+        }
+
+        PCloudUserEntry.IsEnabled = isPCloud;
+        PCloudPasswordEntry.IsEnabled = isPCloud;
+        PasswordVisibilityButton.IsEnabled = isPCloud;
+        PCloudRootEntry.IsEnabled = isPCloud;
+
+        _localGroupBox ??= this.FindByName<Border>("LocalGroupBox");
+        if (_localGroupBox is not null)
+        {
+            _localGroupBox.IsEnabled = !isPCloud;
+        }
+
+        LocalPathEntry.IsEnabled = !isPCloud;
     }
 }

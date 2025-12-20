@@ -1,8 +1,15 @@
+using System;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace pCloudPhotoOrganizer.Services;
+
+public enum ExportMode
+{
+    PCloud,
+    Local
+}
 
 public class SettingsService
 {
@@ -12,6 +19,8 @@ public class SettingsService
     private const string KeyPCloudToken = "pcloud_token";
     private const string KeyPCloudPassword = "pcloud_password";
     private const string KeyDefaultMoveMode = "default_move_mode";
+    private const string KeyExportMode = "export_mode";
+    private const string KeyLocalExportPath = "local_export_path";
 
     private const string ObfuscationPrefix = "obf:";
     private const byte ObfuscationKey = 0x5A;
@@ -70,6 +79,25 @@ public class SettingsService
     public void SavePCloudRootFolder(string? rootFolder)
     {
         Preferences.Default.Set(KeyPCloudRoot, rootFolder ?? string.Empty);
+    }
+
+    public ExportMode GetExportMode()
+    {
+        var stored = Preferences.Default.Get(KeyExportMode, ExportMode.PCloud.ToString());
+        return Enum.TryParse(stored, out ExportMode mode) ? mode : ExportMode.PCloud;
+    }
+
+    public void SaveExportMode(ExportMode mode)
+    {
+        Preferences.Default.Set(KeyExportMode, mode.ToString());
+    }
+
+    public string? GetLocalExportPath()
+        => Preferences.Default.Get(KeyLocalExportPath, string.Empty);
+
+    public void SaveLocalExportPath(string? path)
+    {
+        Preferences.Default.Set(KeyLocalExportPath, path ?? string.Empty);
     }
 
     public async Task<string?> GetPCloudUsernameAsync() => await RetrieveSecureAsync(KeyPCloudUser);
