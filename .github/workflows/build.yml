@@ -38,7 +38,7 @@ jobs:
         run: dotnet restore ${{ env.PROJECT_PATH  }} -p:TargetFramework=${{ env.WINDOWS_TFM }}
 
       - name: Publish Windows package
-        run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.WINDOWS_TFM }} -c ${{ env.CONFIGURATION }} -p:WindowsPackageType=msix -p:AppxPackageSigningEnabled=false
+        run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.WINDOWS_TFM }} -c ${{ env.CONFIGURATION }} -p:WindowsPackageType=MSIX -p:AppxPackageSigningEnabled=false
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
