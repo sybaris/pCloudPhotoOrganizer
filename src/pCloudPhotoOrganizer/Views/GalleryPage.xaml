@@ -127,7 +127,6 @@
                                 <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
-                                  x:DataType="{x:Type sysInput:ICommand}"
                                   Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleGroupSelectCommand}"
                                   CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
@@ -197,7 +196,6 @@
 
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer
-                x:DataType="{x:Type sysInput:ICommand}"
                 Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleSelectCommand}"
                 CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>

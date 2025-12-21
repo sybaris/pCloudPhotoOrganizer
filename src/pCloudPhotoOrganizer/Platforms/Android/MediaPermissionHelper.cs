@@ -1,12 +1,8 @@
 #if ANDROID
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Android.Util;
 using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
-using Application = Microsoft.Maui.Controls.Application;
-using static Android.Manifest;
 
 namespace pCloudPhotoOrganizer.Platforms.Android;
 
@@ -14,124 +10,108 @@ public static class MediaPermissionHelper
 {
     private const string LogTag = "MediaPermissionHelper";
 
-    public static Task EnsureMediaPermissionAsync(Func<Page?>? pageProvider = null)
-        => EnsureMediaPermissionsAsync(pageProvider);
+    public static Task<bool> EnsureMediaPermissionAsync()
+        => EnsureMediaPermissionsAsync();
 
-    public static async Task EnsureMediaPermissionsAsync(Func<Page?>? pageProvider = null)
-    {
-        var status = await Permissions.CheckStatusAsync<MediaReadPermission>();
-        Log.Info(LogTag, $"Media read permission status (initial): {status}");
-        if (status != PermissionStatus.Granted)
-        {
-            status = await Permissions.RequestAsync<MediaReadPermission>();
-            Log.Info(LogTag, $"Media read permission status (after request): {status}");
-        }
-
-        if (status != PermissionStatus.Granted)
-        {
-            await ShowDeniedMessageAsync("Photo and video access is required to list and upload your media.", pageProvider);
-            throw new UnauthorizedAccessException("Media read permission denied.");
-        }
-
-        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
-        {
-            await EnsureLegacyWritePermissionAsync(pageProvider);
-        }
-    }
-
-    public static async Task EnsureDeletionCapabilityAsync(Func<Page?>? pageProvider = null)
-    {
-        if (OperatingSystem.IsAndroidVersionAtLeast(30))
-        {
-            Log.Info(LogTag, "Android 11+: deletion will use MediaStore confirmation; no extra permission requested.");
-            return;
-        }
-
-        if (OperatingSystem.IsAndroidVersionAtLeast(29))
-        {
-            Log.Info(LogTag, "Android 10: scoped storage deletion via MediaStore; no extra permission requested.");
-            return;
-        }
-
-        await EnsureLegacyWritePermissionAsync(pageProvider);
-    }
-
-    public static Task<PermissionStatus> GetMediaPermissionStatusAsync()
-        => Permissions.CheckStatusAsync<MediaReadPermission>();
-
-    public static async Task EnsureStartupPermissionsAsync(Func<Page?>? pageProvider = null)
+    public static async Task<bool> EnsureMediaPermissionsAsync()
     {
         try
         {
-            await EnsureMediaPermissionsAsync(pageProvider);
-            await EnsureDeletionCapabilityAsync(pageProvider);
-            Log.Info(LogTag, "Startup permissions completed.");
+            var granted = OperatingSystem.IsAndroidVersionAtLeast(33)
+                ? await EnsurePermissionAsync<Permissions.Photos>("READ_MEDIA_IMAGES").ConfigureAwait(false)
+                : await EnsurePermissionAsync<Permissions.StorageRead>("READ_EXTERNAL_STORAGE").ConfigureAwait(false);
+
+            Log.Info(LogTag, $"Media permission granted: {granted}");
+            return granted;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(LogTag, $"Media permission request failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> EnsureDeletionCapabilityAsync()
+    {
+        try
+        {
+            if (OperatingSystem.IsAndroidVersionAtLeast(29))
+            {
+                Log.Info(LogTag, "Deletion relies on scoped storage / MediaStore confirmation.");
+                return true;
+            }
+
+            var granted = await EnsurePermissionAsync<Permissions.StorageWrite>("WRITE_EXTERNAL_STORAGE").ConfigureAwait(false);
+            Log.Info(LogTag, $"Legacy deletion permission granted: {granted}");
+            return granted;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(LogTag, $"Deletion capability check failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    public static Task<bool> EnsureStartupPermissionsAsync(Func<object?>? _) => EnsureStartupPermissionsAsync();
+
+    public static async Task<bool> EnsureStartupPermissionsAsync()
+    {
+        try
+        {
+            var mediaGranted = await EnsureMediaPermissionsAsync().ConfigureAwait(false);
+            if (!mediaGranted)
+            {
+                Log.Warn(LogTag, "Startup permissions aborted: media access denied.");
+                return false;
+            }
+
+            var deletionGranted = await EnsureDeletionCapabilityAsync().ConfigureAwait(false);
+            if (!deletionGranted)
+            {
+                Log.Warn(LogTag, "Startup permissions partially granted: deletion unavailable on this device.");
+                return false;
+            }
+
+            Log.Info(LogTag, "Startup permissions granted.");
+            return true;
         }
         catch (Exception ex)
         {
             Log.Warn(LogTag, $"Startup permissions failed: {ex.Message}");
-            throw;
+            return false;
         }
     }
 
-    private static async Task EnsureLegacyWritePermissionAsync(Func<Page?>? pageProvider)
-    {
-        var writeStatus = await Permissions.CheckStatusAsync<MediaWriteLegacyPermission>();
-        Log.Info(LogTag, $"Legacy write permission status (initial): {writeStatus}");
-        if (writeStatus != PermissionStatus.Granted)
-        {
-            writeStatus = await Permissions.RequestAsync<MediaWriteLegacyPermission>();
-            Log.Info(LogTag, $"Legacy write permission status (after request): {writeStatus}");
-        }
-
-        if (writeStatus != PermissionStatus.Granted)
-        {
-            await ShowDeniedMessageAsync("Storage write permission is required to delete photos on this Android version.", pageProvider);
-            throw new UnauthorizedAccessException("Legacy write permission denied.");
-        }
-    }
-
-    private static Task ShowDeniedMessageAsync(string message, Func<Page?>? pageProvider)
+    public static async Task<bool> GetMediaPermissionStatusAsync()
     {
         try
         {
-            var page = pageProvider?.Invoke() ?? Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (page is null)
-                return Task.CompletedTask;
+            var status = OperatingSystem.IsAndroidVersionAtLeast(33)
+                ? await Permissions.CheckStatusAsync<Permissions.Photos>().ConfigureAwait(false)
+                : await Permissions.CheckStatusAsync<Permissions.StorageRead>().ConfigureAwait(false);
 
-            return MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                await page.DisplayAlert("Permissions", message, "OK");
-            });
+            return status == PermissionStatus.Granted;
         }
-        catch
+        catch (Exception ex)
         {
-            return Task.CompletedTask;
+            Log.Warn(LogTag, $"Failed to read media permission status: {ex.Message}");
+            return false;
         }
     }
-}
 
-public class MediaReadPermission : Permissions.BasePlatformPermission
-{
-    public override (string androidPermission, bool isRuntime)[] RequiredPermissions
-        => OperatingSystem.IsAndroidVersionAtLeast(33)
-            ? new[]
-            {
-                (Permission.ReadMediaImages, true),
-                (Permission.ReadMediaVideo, true)
-            }
-            : new[]
-            {
-                (Permission.ReadExternalStorage, true)
-            };
-}
+    private static async Task<bool> EnsurePermissionAsync<TPermission>(string permissionName)
+        where TPermission : Permissions.BasePermission, new()
+    {
+        var status = await Permissions.CheckStatusAsync<TPermission>().ConfigureAwait(false);
+        Log.Info(LogTag, $"{permissionName} permission status (initial): {status}");
 
-public class MediaWriteLegacyPermission : Permissions.BasePlatformPermission
-{
-    public override (string androidPermission, bool isRuntime)[] RequiredPermissions
-        => new[]
-        {
-            (Permission.WriteExternalStorage, true)
-        };
+        if (status == PermissionStatus.Granted)
+            return true;
+
+        status = await Permissions.RequestAsync<TPermission>().ConfigureAwait(false);
+        Log.Info(LogTag, $"{permissionName} permission status (after request): {status}");
+
+        return status == PermissionStatus.Granted;
+    }
 }
 #endif
