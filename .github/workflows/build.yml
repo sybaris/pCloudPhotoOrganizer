@@ -86,7 +86,7 @@ jobs:
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
+          name: com.companyname.pcloudphotoorganizer-apk
           if-no-files-found: error
           path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/**/*.apk
 
