@@ -31,6 +31,10 @@ public class LocalExportService
     {
         ArgumentNullException.ThrowIfNull(item);
 
+#if ANDROID
+        await ExternalStoragePermissionHelper.EnsureAllFilesAccessAsync();
+#endif
+
         var stopwatch = Stopwatch.StartNew();
         string destinationPath = string.Empty;
         var itemLabel = GetItemLabel(item);
