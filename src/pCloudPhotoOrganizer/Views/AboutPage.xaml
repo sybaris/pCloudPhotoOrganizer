@@ -21,6 +21,11 @@
           FontSize="Medium"
           IsVisible="False" />
 
+      <Label
+          x:Name="AndroidApiVersionLabel"
+          FontSize="Medium"
+          IsVisible="False" />
+
       <Label Text="Auteur : Jean-Pierre Planas" />
 
       <Label Text="GitHub : https://github.com/sybaris/pCloudPhotoOrganizer"
