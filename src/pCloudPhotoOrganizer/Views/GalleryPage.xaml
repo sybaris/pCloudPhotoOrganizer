@@ -53,7 +53,7 @@
 
                 <!-- En-tête de groupe (date) -->
                 <CollectionView.GroupHeaderTemplate>
-                    <DataTemplate x:DataType="models:MediaGroup">
+                    <DataTemplate>
                         <Grid Padding="5,10"
                 BackgroundColor="#EEEEEE"
                 ColumnDefinitions="*,Auto"
@@ -70,6 +70,7 @@
 
                             <!-- Bouton de sélection pour toute la date -->
                             <Border Grid.Column="1"
+                    x:Name="GroupSelector"
                     Padding="0"
                     WidthRequest="30"
                     HeightRequest="30"
