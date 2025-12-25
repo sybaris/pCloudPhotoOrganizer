@@ -16,11 +16,13 @@
                  Command="{Binding RefreshCommand}"
                  Priority="0"
                  Order="Primary"
+                 Text="Refresh"
                  SemanticProperties.Description="Actualiser la galerie" />
         <ToolbarItem IconImageSource="icon_transfer.svg"
                  Clicked="OnSendToPCloudClicked"
                  Priority="1"
                  Order="Primary"
+                 Text="Tranfert"
                  SemanticProperties.Description="Vers pCloud" />
     </maui:ContentPage.ToolbarItems>
 

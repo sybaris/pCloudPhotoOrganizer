@@ -18,12 +18,7 @@ WEB-DAV LIMITATIONS OF PCLOUD (MANDATORY FOR ALL CODE):
      https://ewebdav.pcloud.com/<remote-path>/<filename>
 ------------------------------------------------------------
 */
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using pCloudPhotoOrganizer.Models;
 using pCloudPhotoOrganizer.Services;
 using pCloudPhotoOrganizer.ViewModels;
@@ -97,7 +92,7 @@ public partial class GalleryPage : ContentPage
 
     private async Task ExportLocallyAsync(List<MediaItem> selectedItems, PCloudAlbumSelection selection)
     {
-        bool moveFiles = _settings.GetDefaultMoveMode();
+        bool moveFiles = selection.MoveFiles;
         _vm.IsUploading = true;
         _vm.UploadStatus = "Préparation de l'export local...";
         var batchStopwatch = Stopwatch.StartNew();
@@ -105,6 +100,14 @@ public partial class GalleryPage : ContentPage
         try
         {
             await _logService.LogInfo($"Début d'export local de {selectedItems.Count} fichier(s) (déplacement={moveFiles}).");
+
+            await LocalExportService.EnsureAllFilesAccessAsync();
+
+            var configuredFolder = _settings.GetLocalExportPath();
+            if (string.IsNullOrWhiteSpace(configuredFolder))
+                throw new InvalidOperationException("Aucun dossier local n'est configuré dans les paramètres.");
+
+            var destinationFolder = _localExportService.EnsureDestinationFolderExists(configuredFolder, selection.AlbumName);
 
             int total = selectedItems.Count;
             int index = 0;
@@ -118,17 +121,11 @@ public partial class GalleryPage : ContentPage
                 var fileStopwatch = Stopwatch.StartNew();
                 try
                 {
-                    if (moveFiles)
-                    {
-                        await _localExportService.MoveAsync(item);
-                    }
-                    else
-                    {
-                        await _localExportService.CopyAsync(item);
-                    }
+                    await _localExportService.CopyOrMoveAsync(item, destinationFolder, moveFiles);
 
                     fileStopwatch.Stop();
-                    await _logService.LogOperation($"Export local '{itemLabel}' en {fileStopwatch.Elapsed.TotalSeconds:F2}s.");
+
+                    await _logService.LogOperation($"{(moveFiles ? "Déplacement" : "Copie")} locale  '{itemLabel}' en {fileStopwatch.Elapsed.TotalSeconds:F2}s.");
                 }
                 catch (Exception ex)
                 {

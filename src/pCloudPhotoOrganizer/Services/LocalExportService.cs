@@ -12,61 +12,37 @@ public class LocalExportService
 {
     private readonly SettingsService _settings;
     private readonly MediaDeletionService _deletionService;
-    private readonly AppLogService _logService;
 
     private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 
-    public LocalExportService(SettingsService settings, MediaDeletionService deletionService, AppLogService logService)
+    public LocalExportService(SettingsService settings, MediaDeletionService deletionService)
     {
         _settings = settings;
         _deletionService = deletionService;
-        _logService = logService;
     }
 
-    public Task CopyAsync(MediaItem item) => CopyOrMoveAsync(item, move: false);
-
-    public Task MoveAsync(MediaItem item) => CopyOrMoveAsync(item, move: true);
-
-    private async Task CopyOrMoveAsync(MediaItem item, bool move)
+    public async Task CopyOrMoveAsync(MediaItem item, string destinationFolder, bool move)
     {
         ArgumentNullException.ThrowIfNull(item);
 
+        var destinationPath = await CopyFileToDestinationAsync(item, destinationFolder);
+
+        if (move)
+            await _deletionService.DeleteAsync(item);
+    }
+
+    public static async Task EnsureAllFilesAccessAsync()
+    {
 #if ANDROID
         await ExternalStoragePermissionHelper.EnsureAllFilesAccessAsync();
 #endif
-
-        var stopwatch = Stopwatch.StartNew();
-        string destinationPath = string.Empty;
-        var itemLabel = GetItemLabel(item);
-
-        try
-        {
-            var destinationFolder = EnsureDestinationFolderExists();
-            destinationPath = await CopyFileToDestinationAsync(item, destinationFolder);
-
-            if (move)
-            {
-                await _deletionService.DeleteAsync(item);
-            }
-
-            stopwatch.Stop();
-            await _logService.LogOperation($"{(move ? "Déplacement" : "Copie")} locale '{itemLabel}' -> '{destinationPath}' en {stopwatch.Elapsed.TotalSeconds:F2}s.");
-        }
-        catch (Exception ex)
-        {
-            stopwatch.Stop();
-            await _logService.LogError(ex, $"Erreur durant le {(move ? "déplacement" : "copie")} local de '{itemLabel}'.");
-            throw;
-        }
     }
 
-    private string EnsureDestinationFolderExists()
+    public string EnsureDestinationFolderExists(string baseFolder, string newFolder)
     {
-        var configured = _settings.GetLocalExportPath();
-        if (string.IsNullOrWhiteSpace(configured))
-            throw new InvalidOperationException("Aucun dossier local n'est configuré dans les paramètres.");
-
-        var expanded = Environment.ExpandEnvironmentVariables(configured.Trim());
+        var expanded = Environment.ExpandEnvironmentVariables(baseFolder.Trim());
+        if (!string.IsNullOrWhiteSpace(newFolder))
+            expanded = Path.Combine(expanded, newFolder.Trim());
         var absolute = Path.GetFullPath(expanded);
         Directory.CreateDirectory(absolute);
         return absolute;
@@ -77,10 +53,19 @@ public class LocalExportService
         var fileName = BuildSafeFileName(item);
         var destinationPath = EnsureUniqueDestination(destinationFolder, fileName);
 
+#if ANDROID
         await using var sourceStream = await OpenReadStreamAsync(item);
         await using var destinationStream = new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true);
         await sourceStream.CopyToAsync(destinationStream);
+#else
+        if (string.IsNullOrWhiteSpace(item.FilePath))
+            throw new FileNotFoundException($"Chemin du fichier manquant pour '{GetItemLabel(item)}'.");
 
+        if (!File.Exists(item.FilePath))
+            throw new FileNotFoundException($"Fichier introuvable : {item.FilePath}");
+
+        File.Copy(item.FilePath, destinationPath);
+#endif
         return destinationPath;
     }
 
