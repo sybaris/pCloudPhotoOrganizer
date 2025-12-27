@@ -15,6 +15,11 @@ public class LocalExportService
 
     private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 
+    public async Task DeleteAsync(IEnumerable<MediaItem> items)
+    {
+        await _deletionService.DeleteAsync(items);
+    }
+
     public LocalExportService(SettingsService settings, MediaDeletionService deletionService)
     {
         _settings = settings;

@@ -35,7 +35,6 @@ public class MediaDeletionService
             return;
 
         await MediaPermissionHelper.EnsureMediaPermissionAsync();
-        await MediaPermissionHelper.EnsureDeletionCapabilityAsync();
 
         var requestResult = await TryDeleteWithMediaStoreRequestAsync(context, mediaItems);
         if (requestResult == DeleteRequestResult.Approved)
@@ -58,9 +57,6 @@ public class MediaDeletionService
 
     private async Task<DeleteRequestResult> TryDeleteWithMediaStoreRequestAsync(Context context, List<MediaItem> mediaItems)
     {
-        if (!OperatingSystem.IsAndroidVersionAtLeast(30))
-            return DeleteRequestResult.NotRequested;
-
         var contentResolver = context.ContentResolver;
         if (contentResolver is null)
         {

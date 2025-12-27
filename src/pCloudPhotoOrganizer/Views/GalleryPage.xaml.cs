@@ -121,7 +121,7 @@ public partial class GalleryPage : ContentPage
                 var fileStopwatch = Stopwatch.StartNew();
                 try
                 {
-                    await _localExportService.CopyOrMoveAsync(item, destinationFolder, moveFiles);
+                    await _localExportService.CopyOrMoveAsync(item, destinationFolder, false);
 
                     fileStopwatch.Stop();
 
@@ -133,6 +133,10 @@ public partial class GalleryPage : ContentPage
                     await _logService.LogError(ex, $"Erreur durant l'export local de '{itemLabel}'.");
                     throw;
                 }
+            }
+            if (moveFiles)
+            {
+                await _localExportService.DeleteAsync(selectedItems);
             }
 
             batchStopwatch.Stop();

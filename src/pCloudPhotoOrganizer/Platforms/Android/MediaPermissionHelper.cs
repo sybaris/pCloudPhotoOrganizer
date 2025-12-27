@@ -17,9 +17,7 @@ public static class MediaPermissionHelper
     {
         try
         {
-            var granted = OperatingSystem.IsAndroidVersionAtLeast(33)
-                ? await EnsurePermissionAsync<Permissions.Photos>("READ_MEDIA_IMAGES").ConfigureAwait(false)
-                : await EnsurePermissionAsync<Permissions.StorageRead>("READ_EXTERNAL_STORAGE").ConfigureAwait(false);
+            var granted = await EnsurePermissionAsync<Permissions.Photos>("READ_MEDIA_IMAGES").ConfigureAwait(false);
 
             Log.Info(LogTag, $"Media permission granted: {granted}");
             return granted;
@@ -27,27 +25,6 @@ public static class MediaPermissionHelper
         catch (Exception ex)
         {
             Log.Warn(LogTag, $"Media permission request failed: {ex.Message}");
-            return false;
-        }
-    }
-
-    public static async Task<bool> EnsureDeletionCapabilityAsync()
-    {
-        try
-        {
-            if (OperatingSystem.IsAndroidVersionAtLeast(29))
-            {
-                Log.Info(LogTag, "Deletion relies on scoped storage / MediaStore confirmation.");
-                return true;
-            }
-
-            var granted = await EnsurePermissionAsync<Permissions.StorageWrite>("WRITE_EXTERNAL_STORAGE").ConfigureAwait(false);
-            Log.Info(LogTag, $"Legacy deletion permission granted: {granted}");
-            return granted;
-        }
-        catch (Exception ex)
-        {
-            Log.Warn(LogTag, $"Deletion capability check failed: {ex.Message}");
             return false;
         }
     }
@@ -65,13 +42,6 @@ public static class MediaPermissionHelper
                 return false;
             }
 
-            var deletionGranted = await EnsureDeletionCapabilityAsync().ConfigureAwait(false);
-            if (!deletionGranted)
-            {
-                Log.Warn(LogTag, "Startup permissions partially granted: deletion unavailable on this device.");
-                return false;
-            }
-
             Log.Info(LogTag, "Startup permissions granted.");
             return true;
         }
@@ -86,9 +56,7 @@ public static class MediaPermissionHelper
     {
         try
         {
-            var status = OperatingSystem.IsAndroidVersionAtLeast(33)
-                ? await Permissions.CheckStatusAsync<Permissions.Photos>().ConfigureAwait(false)
-                : await Permissions.CheckStatusAsync<Permissions.StorageRead>().ConfigureAwait(false);
+            var status = await Permissions.CheckStatusAsync<Permissions.Photos>().ConfigureAwait(false);
 
             return status == PermissionStatus.Granted;
         }

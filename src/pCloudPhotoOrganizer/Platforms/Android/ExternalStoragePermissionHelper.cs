@@ -21,9 +21,6 @@ public static class ExternalStoragePermissionHelper
 
     public static async Task EnsureAllFilesAccessAsync(Func<Page?>? pageProvider = null)
     {
-        if (!OperatingSystem.IsAndroidVersionAtLeast(30))
-            return;
-
         if (AndroidEnvironment.IsExternalStorageManager)
             return;
 
