@@ -26,22 +26,12 @@ public class LocalExportService
         _deletionService = deletionService;
     }
 
-    public async Task CopyOrMoveAsync(MediaItem item, string destinationFolder, bool move)
-    {
-        ArgumentNullException.ThrowIfNull(item);
-
-        var destinationPath = await CopyFileToDestinationAsync(item, destinationFolder);
-
-        if (move)
-            await _deletionService.DeleteAsync(item);
-    }
-
+#if ANDROID
     public static async Task EnsureAllFilesAccessAsync()
     {
-#if ANDROID
         await ExternalStoragePermissionHelper.EnsureAllFilesAccessAsync();
-#endif
     }
+#endif
 
     public string EnsureDestinationFolderExists(string baseFolder, string newFolder)
     {
@@ -53,25 +43,45 @@ public class LocalExportService
         return absolute;
     }
 
-    private async Task<string> CopyFileToDestinationAsync(MediaItem item, string destinationFolder)
+    public Task<string> CopyAsync(MediaItem item, string destinationFolder)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+#if ANDROID
+        return CopyAndroidAsync(item, destinationFolder);
+#else
+        return CopyWindowsAsync(item, destinationFolder);
+#endif
+    }
+
+#if ANDROID
+    private async Task<string> CopyAndroidAsync(MediaItem item, string destinationFolder)
     {
         var fileName = BuildSafeFileName(item);
         var destinationPath = EnsureUniqueDestination(destinationFolder, fileName);
 
-#if ANDROID
         await using var sourceStream = await OpenReadStreamAsync(item);
-        await using var destinationStream = new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+        await using var destinationStream =
+            new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+
         await sourceStream.CopyToAsync(destinationStream);
-#else
+        return destinationPath;
+    }
+#endif
+
+    private Task<string> CopyWindowsAsync(MediaItem item, string destinationFolder)
+    {
         if (string.IsNullOrWhiteSpace(item.FilePath))
             throw new FileNotFoundException($"Chemin du fichier manquant pour '{GetItemLabel(item)}'.");
 
         if (!File.Exists(item.FilePath))
             throw new FileNotFoundException($"Fichier introuvable : {item.FilePath}");
 
+        var fileName = BuildSafeFileName(item);
+        var destinationPath = EnsureUniqueDestination(destinationFolder, fileName);
+
         File.Copy(item.FilePath, destinationPath);
-#endif
-        return destinationPath;
+
+        return Task.FromResult(destinationPath);
     }
 
     private static string BuildSafeFileName(MediaItem item)
@@ -122,9 +132,9 @@ public class LocalExportService
         return "media";
     }
 
+#if ANDROID
     private async Task<Stream> OpenReadStreamAsync(MediaItem item)
     {
-#if ANDROID
         await MediaPermissionHelper.EnsureMediaPermissionAsync();
         var context = AndroidApp.Context ?? throw new InvalidOperationException("Contexte Android indisponible.");
         var contentResolver = context.ContentResolver ?? throw new InvalidOperationException("ContentResolver indisponible.");
@@ -146,14 +156,6 @@ public class LocalExportService
             return File.OpenRead(item.FilePath);
 
         throw new FileNotFoundException($"Impossible de déterminer la source du fichier '{GetItemLabel(item)}'.");
-#else
-        if (string.IsNullOrWhiteSpace(item.FilePath))
-            throw new FileNotFoundException($"Chemin du fichier manquant pour '{GetItemLabel(item)}'.");
-
-        if (!File.Exists(item.FilePath))
-            throw new FileNotFoundException($"Fichier introuvable : {item.FilePath}");
-
-        return File.OpenRead(item.FilePath);
-#endif
     }
+#endif
 }

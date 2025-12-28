@@ -100,9 +100,9 @@ public partial class GalleryPage : ContentPage
         try
         {
             await _logService.LogInfo($"Début d'export local de {selectedItems.Count} fichier(s) (déplacement={moveFiles}).");
-
+#if ANDROID
             await LocalExportService.EnsureAllFilesAccessAsync();
-
+#endif
             var configuredFolder = _settings.GetLocalExportPath();
             if (string.IsNullOrWhiteSpace(configuredFolder))
                 throw new InvalidOperationException("Aucun dossier local n'est configuré dans les paramètres.");
@@ -121,7 +121,7 @@ public partial class GalleryPage : ContentPage
                 var fileStopwatch = Stopwatch.StartNew();
                 try
                 {
-                    await _localExportService.CopyOrMoveAsync(item, destinationFolder, false);
+                    await _localExportService.CopyAsync(item, destinationFolder);
 
                     fileStopwatch.Stop();
 
