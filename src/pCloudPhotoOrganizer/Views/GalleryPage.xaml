@@ -13,97 +13,117 @@
     x:DataType="viewmodels:GalleryViewModel"
     BackgroundColor="White">
     <maui:ContentPage.ToolbarItems>
-        <ToolbarItem IconImageSource="icon_refresh.svg"
-              Command="{Binding RefreshCommand}"
-              Priority="0"
-              Order="Primary"
-              Text="Refresh"
-              SemanticProperties.Description="Actualiser la galerie" />
-        <ToolbarItem IconImageSource="icon_transfer.svg"
-              Clicked="OnSendToPCloudClicked"
-              Priority="1"
-              Order="Primary"
-              Text="Tranfert"
-              SemanticProperties.Description="Vers pCloud" />
+        <ToolbarItem
+            IconImageSource="icon_refresh.svg"
+            Command="{Binding RefreshCommand}"
+            Priority="0"
+            Order="Primary"
+            Text="Refresh"
+            SemanticProperties.Description="Actualiser la galerie" />
+        <ToolbarItem
+            IconImageSource="icon_transfer.svg"
+            Clicked="OnSendToPCloudClicked"
+            Priority="1"
+            Order="Primary"
+            Text="Tranfert"
+            SemanticProperties.Description="Vers pCloud" />
     </maui:ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*">
-        <StackLayout Orientation="Horizontal" Padding="10,5" Spacing="10" IsVisible="{Binding IsUploading}">
-            <ActivityIndicator IsRunning="{Binding IsUploading}" VerticalOptions="Center" />
-            <Label Text="{Binding UploadStatus}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+        <StackLayout
+            Orientation="Horizontal"
+            Padding="10,5"
+            Spacing="10"
+            IsVisible="{Binding IsUploading}">
+            <ActivityIndicator
+                IsRunning="{Binding IsUploading}"
+                VerticalOptions="Center" />
+            <Label
+                Text="{Binding UploadStatus}"
+                VerticalOptions="Center"
+                LineBreakMode="TailTruncation" />
         </StackLayout>
 
-        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading, Mode=OneWay}" Command="{Binding RefreshCommand}">
+        <RefreshView
+            Grid.Row="1"
+            IsRefreshing="{Binding IsLoading, Mode=OneWay}"
+            Command="{Binding RefreshCommand}">
             <CollectionView
-              x:Name="GalleryCollectionView"
-              ItemsSource="{Binding Groups}"
-              IsGrouped="True"
-              SelectionMode="None"
-              Margin="10">
+                x:Name="GalleryCollectionView"
+                ItemsSource="{Binding Groups}"
+                IsGrouped="True"
+                SelectionMode="None"
+                Margin="10">
 
                 <!-- Vue quand il n'y a aucune photo -->
                 <CollectionView.EmptyView>
                     <Grid>
-                        <Label Text="Aucune photo trouvée"
-                              HorizontalOptions="Center"
-                              VerticalOptions="Center"
-                              FontSize="Medium"
-                              TextColor="Gray" />
+                        <Label
+                            Text="Aucune photo trouvée"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            FontSize="Medium"
+                            TextColor="Gray" />
                     </Grid>
                 </CollectionView.EmptyView>
 
                 <!-- En-tête de groupe (date) -->
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate  x:DataType="{x:Null}">
-                        <Grid Padding="5,10"
-      BackgroundColor="#EEEEEE"
-      ColumnDefinitions="*,Auto"
-     ColumnSpacing="10"
-  VerticalOptions="Center">
+                        <Grid
+                            Padding="5,10"
+                            BackgroundColor="#EEEEEE"
+                            ColumnDefinitions="*,Auto"
+                            ColumnSpacing="10"
+                            VerticalOptions="Center">
 
                             <!-- Date / titre du groupe -->
-                            <Label Grid.Column="0"
-         Text="{Binding Title}"
-  FontAttributes="Bold"
-    FontSize="Medium"
-       VerticalOptions="Center"
-  HorizontalOptions="Start" />
+                            <Label
+                                Grid.Column="0"
+                                Text="{Binding Title}"
+                                FontAttributes="Bold"
+                                FontSize="Medium"
+                                VerticalOptions="Center"
+                                HorizontalOptions="Start" />
 
                             <!-- Bouton de sélection pour toute la date -->
-                            <Border Grid.Column="1"
-        x:Name="GroupSelector"
-               Padding="0"
-         WidthRequest="30"
-       HeightRequest="30"
-        BackgroundColor="#80FFFFFF"
-            Stroke="LightGray"
-          StrokeThickness="1"
-     HorizontalOptions="End"
-          VerticalOptions="Center">
+                            <Border
+                                Grid.Column="1"
+                                x:Name="GroupSelector"
+                                Padding="0"
+                                WidthRequest="30"
+                                HeightRequest="30"
+                                BackgroundColor="#80FFFFFF"
+                                Stroke="LightGray"
+                                StrokeThickness="1"
+                                HorizontalOptions="End"
+                                VerticalOptions="Center">
                                 <Border.StrokeShape>
                                     <shapes:RoundRectangle CornerRadius="15" />
                                 </Border.StrokeShape>
 
                                 <Label
-      Text=""
-      HorizontalOptions="Center"
-          VerticalOptions="Center"
-     FontSize="14"
-   FontAttributes="Bold"
-         TextColor="Transparent">
+                                    Text=""
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
+                                    TextColor="Transparent">
                                     <Label.Triggers>
                                         <!-- Quand TOUT le groupe est sélectionné -->
-                                        <DataTrigger TargetType="Label"
-         Binding="{Binding IsAllSelected}"
-                Value="True">
+                                        <DataTrigger
+                                            TargetType="Label"
+                                            Binding="{Binding IsAllSelected}"
+                                            Value="True">
                                             <Setter Property="Text" Value="✓" />
                                             <Setter Property="TextColor" Value="White" />
                                         </DataTrigger>
 
                                         <!-- Quand le groupe n'est pas entièrement sélectionné -->
-                                        <DataTrigger TargetType="Label"
-    Binding="{Binding IsAllSelected}"
-     Value="False">
+                                        <DataTrigger
+                                            TargetType="Label"
+                                            Binding="{Binding IsAllSelected}"
+                                            Value="False">
                                             <Setter Property="Text" Value="" />
                                             <Setter Property="TextColor" Value="Transparent" />
                                         </DataTrigger>
@@ -112,17 +132,19 @@
 
                                 <Border.Triggers>
                                     <!-- Groupe entièrement sélectionné -->
-                                    <DataTrigger TargetType="Border"
-     Binding="{Binding IsAllSelected}"
-    Value="True">
+                                    <DataTrigger
+                                        TargetType="Border"
+                                        Binding="{Binding IsAllSelected}"
+                                        Value="True">
                                         <Setter Property="BackgroundColor" Value="DodgerBlue" />
                                         <Setter Property="Stroke" Value="DodgerBlue" />
                                     </DataTrigger>
 
                                     <!-- Groupe non entièrement sélectionné -->
-                                    <DataTrigger TargetType="Border"
-      Binding="{Binding IsAllSelected}"
-   Value="False">
+                                    <DataTrigger
+                                        TargetType="Border"
+                                        Binding="{Binding IsAllSelected}"
+                                        Value="False">
                                         <Setter Property="BackgroundColor" Value="#80FFFFFF" />
                                         <Setter Property="Stroke" Value="LightGray" />
                                     </DataTrigger>
@@ -130,12 +152,12 @@
 
                                 <!-- Clic sur le rond = sélection / désélection de toutes les photos -->
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer  x:DataType="{x:Null}"
-                                   Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleGroupSelectCommand}"
-      CommandParameter="{Binding .}" />
+                                    <TapGestureRecognizer
+                                        x:DataType="{x:Null}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleGroupSelectCommand}"
+                                        CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
                             </Border>
-
                         </Grid>
                     </DataTemplate>
                 </CollectionView.GroupHeaderTemplate>
@@ -144,45 +166,48 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate  x:DataType="{x:Null}">
                         <Grid Padding="2">
-                            <Border Padding="0"
-     StrokeThickness="0">
+                            <Border Padding="0" StrokeThickness="0">
                                 <Border.StrokeShape>
                                     <shapes:RoundRectangle CornerRadius="5" />
                                 </Border.StrokeShape>
                                 <Grid>
 
                                     <!-- La photo -->
-                                    <Image Source="{Binding Thumbnail}"
-    Aspect="AspectFill" />
+                                    <Image
+                                        Source="{Binding Thumbnail}"
+                                        Aspect="AspectFill" />
 
                                     <!-- Bouton de sélection (toujours visible) -->
                                     <Grid
-    WidthRequest="30"
-    HeightRequest="30"
-    HorizontalOptions="End"
-    VerticalOptions="Start"
-    Margin="4">
+                                        WidthRequest="30"
+                                        HeightRequest="30"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Start"
+                                        Margin="4">
 
-                                        <Border x:Name="SelectionCircle"
-          Padding="0"
- BackgroundColor="#80FFFFFF"
-   Stroke="LightGray"
-              StrokeThickness="1">
+                                        <Border
+                                            x:Name="SelectionCircle"
+                                            Padding="0"
+                                            BackgroundColor="#80FFFFFF"
+                                            Stroke="LightGray"
+                                            StrokeThickness="1">
                                             <Border.StrokeShape>
                                                 <shapes:RoundRectangle CornerRadius="15" />
                                             </Border.StrokeShape>
 
-                                            <Label x:Name="SelectionLabel"
-         Text=""
-       HorizontalOptions="Center"
-      VerticalOptions="Center"
-             FontSize="14"
-            FontAttributes="Bold"
-            TextColor="Transparent">
+                                            <Label
+                                                x:Name="SelectionLabel"
+                                                Text=""
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center"
+                                                FontSize="14"
+                                                FontAttributes="Bold"
+                                                TextColor="Transparent">
                                                 <Label.Triggers>
-                                                    <DataTrigger TargetType="Label"
-         Binding="{Binding IsSelected}"
-           Value="True">
+                                                    <DataTrigger
+                                                        TargetType="Label"
+                                                        Binding="{Binding IsSelected}"
+                                                        Value="True">
                                                         <Setter Property="Text" Value="✓" />
                                                         <Setter Property="TextColor" Value="White" />
                                                     </DataTrigger>
@@ -190,23 +215,23 @@
                                             </Label>
 
                                             <Border.Triggers>
-                                                <DataTrigger TargetType="Border"
-               Binding="{Binding IsSelected}"
-  Value="True">
+                                                <DataTrigger
+                                                    TargetType="Border"
+                                                    Binding="{Binding IsSelected}"
+                                                    Value="True">
                                                     <Setter Property="BackgroundColor" Value="DodgerBlue" />
                                                     <Setter Property="Stroke" Value="DodgerBlue" />
                                                 </DataTrigger>
                                             </Border.Triggers>
 
                                             <Border.GestureRecognizers>
-                                                <TapGestureRecognizer  x:DataType="{x:Null}"
-                Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleSelectCommand}"
-                CommandParameter="{Binding .}" />
+                                                <TapGestureRecognizer
+                                                    x:DataType="{x:Null}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type maui:ContentPage}}, Path=BindingContext.ToggleSelectCommand}"
+                                                    CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>
                                         </Border>
                                     </Grid>
-
-
                                 </Grid>
                             </Border>
                         </Grid>
