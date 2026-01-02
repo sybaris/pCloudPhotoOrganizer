@@ -1,7 +1,9 @@
 #if ANDROID
 using System;
 using System.Threading.Tasks;
+using Android.Content.PM;
 using Android.Util;
+using AndroidX.Core.Content;
 using Microsoft.Maui.ApplicationModel;
 
 namespace pCloudPhotoOrganizer.Platforms.Android;
@@ -17,10 +19,11 @@ public static class MediaPermissionHelper
     {
         try
         {
-            var granted = await EnsurePermissionAsync<Permissions.Photos>("READ_MEDIA_IMAGES").ConfigureAwait(false);
+            var imagesGranted = await EnsurePermissionAsync<Permissions.Photos>("READ_MEDIA_IMAGES").ConfigureAwait(false);
+            var videosGranted = await EnsureVideoPermissionAsync().ConfigureAwait(false);
 
-            Log.Info(LogTag, $"Media permission granted: {granted}");
-            return granted;
+            Log.Info(LogTag, $"Media permissions granted: images={imagesGranted}, videos={videosGranted}");
+            return imagesGranted && videosGranted;
         }
         catch (Exception ex)
         {
@@ -56,9 +59,10 @@ public static class MediaPermissionHelper
     {
         try
         {
-            var status = await Permissions.CheckStatusAsync<Permissions.Photos>().ConfigureAwait(false);
+            var photoStatus = await Permissions.CheckStatusAsync<Permissions.Photos>().ConfigureAwait(false);
+            var videoStatus = await CheckVideoPermissionStatusAsync().ConfigureAwait(false);
 
-            return status == PermissionStatus.Granted;
+            return photoStatus == PermissionStatus.Granted && videoStatus == PermissionStatus.Granted;
         }
         catch (Exception ex)
         {
@@ -80,6 +84,35 @@ public static class MediaPermissionHelper
         Log.Info(LogTag, $"{permissionName} permission status (after request): {status}");
 
         return status == PermissionStatus.Granted;
+    }
+
+    private static async Task<bool> EnsureVideoPermissionAsync()
+    {
+        var status = await CheckVideoPermissionStatusAsync().ConfigureAwait(false);
+        if (status == PermissionStatus.Granted)
+            return true;
+
+        if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+            return true;
+
+        var activity = Platform.CurrentActivity;
+        if (activity is null)
+            return false;
+
+        return await MediaPermissionRequestHandler.RequestAsync(activity).ConfigureAwait(false);
+    }
+
+    private static Task<PermissionStatus> CheckVideoPermissionStatusAsync()
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+            return Task.FromResult(PermissionStatus.Granted);
+
+        var context = Platform.CurrentActivity ?? global::Android.App.Application.Context;
+        if (context is null)
+            return Task.FromResult(PermissionStatus.Unknown);
+
+        var granted = ContextCompat.CheckSelfPermission(context, global::Android.Manifest.Permission.ReadMediaVideo) == Permission.Granted;
+        return Task.FromResult(granted ? PermissionStatus.Granted : PermissionStatus.Denied);
     }
 }
 #endif

@@ -71,7 +71,7 @@ public partial class GalleryPage : ContentPage
     {
         if (_vm.SelectedItems is null || _vm.SelectedItems.Count == 0)
         {
-            await DisplayAlert("Sélection", "Sélectionnez au moins une photo avant de faire un transfert.", "OK");
+            await DisplayAlert("Sélection", "Sélectionnez au moins une photo ou vidéo avant de faire un transfert.", "OK");
             await _logService.LogInfo("Tentative de transfert sans sélection.");
             return;
         }

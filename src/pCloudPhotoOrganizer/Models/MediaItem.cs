@@ -10,6 +10,7 @@ namespace pCloudPhotoOrganizer.Models;
 public class MediaItem : INotifyPropertyChanged
 {
     private bool _isSelected;
+    private MediaKind _kind = MediaKind.Photo;
 
     public string FilePath { get; set; } = string.Empty;
 
@@ -22,6 +23,22 @@ public class MediaItem : INotifyPropertyChanged
     public DateTime DateTaken { get; set; }
 
     public ImageSource? Thumbnail { get; set; }
+
+    public MediaKind Kind
+    {
+        get => _kind;
+        set
+        {
+            if (_kind == value)
+                return;
+
+            _kind = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsVideo));
+        }
+    }
+
+    public bool IsVideo => Kind == MediaKind.Video;
 
     public bool IsSelected
     {
@@ -57,4 +74,10 @@ public class MediaItem : INotifyPropertyChanged
 
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public enum MediaKind
+{
+    Photo,
+    Video
 }

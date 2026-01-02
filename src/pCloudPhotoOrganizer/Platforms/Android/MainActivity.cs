@@ -2,6 +2,7 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Runtime;
 using pCloudPhotoOrganizer.Platforms.Android;
 
 namespace pCloudPhotoOrganizer;
@@ -50,5 +51,11 @@ public class MainActivity : MauiAppCompatActivity
         base.OnActivityResult(requestCode, resultCode, data);
 
         DeleteRequestActivityResultHandler.TryHandle(requestCode, resultCode);
+    }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        MediaPermissionRequestHandler.TryHandle(requestCode, grantResults);
     }
 }
