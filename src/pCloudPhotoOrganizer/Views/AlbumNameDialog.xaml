@@ -24,7 +24,7 @@
           x:Name="MoveCheckBox"
           IsChecked="True" />
       <Label
-          Text="Move photos instead of copying"
+          Text="Déplacer les photos au lieu de copier"
           VerticalOptions="Center">
         <Label.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnMoveOptionTapped" />

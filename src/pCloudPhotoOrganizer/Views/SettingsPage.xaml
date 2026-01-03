@@ -120,7 +120,7 @@
               x:Name="DefaultMoveSwitch"
               IsToggled="True" />
           <Label
-              Text="Deplacer les photos vers pCloud par defaut"
+              Text="Déplacer les photos par défaut"
               VerticalOptions="Center" />
         </HorizontalStackLayout>
 

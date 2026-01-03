@@ -10,7 +10,7 @@
     xmlns:models="clr-namespace:pCloudPhotoOrganizer.Models"
     xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
     xmlns:controls="clr-namespace:pCloudPhotoOrganizer.Controls"
-    Title="Gallery"
+    Title="Gallerie"
     x:DataType="viewmodels:GalleryViewModel"
     BackgroundColor="White">
     <maui:ContentPage.ToolbarItems>
