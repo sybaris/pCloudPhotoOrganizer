@@ -91,6 +91,53 @@ public partial class GalleryPage : ContentPage
          DeselectItems(selectionSnapshot);
     }
 
+    private async void OnDeleteSelectedClicked(object sender, EventArgs e)
+    {
+        var selectionSnapshot = _vm.GetSelectionSnapshot();
+        if (selectionSnapshot.Count == 0)
+        {
+            await DisplayAlert("Suppression", "Sélectionnez au moins une photo ou vidéo avant de supprimer.", "OK");
+            await _logService.LogInfo("Tentative de suppression sans sélection.");
+            return;
+        }
+
+        var confirmMessage = selectionSnapshot.Count == 1
+            ? "Supprimer l'élément sélectionné ?"
+            : $"Supprimer les {selectionSnapshot.Count} éléments sélectionnés ?";
+
+        var confirm = await DisplayAlert("Suppression", confirmMessage, "Supprimer", "Annuler");
+        if (!confirm)
+        {
+            await _logService.LogInfo("Suppression annulée par l'utilisateur.");
+            return;
+        }
+
+        _vm.IsUploading = true;
+        _vm.UploadStatus = "Suppression des éléments sélectionnés...";
+
+        try
+        {
+            await _deletionService.DeleteAsync(selectionSnapshot);
+            await _logService.LogOperation($"Suppression manuelle de {selectionSnapshot.Count} fichier(s).");
+
+            _vm.UploadStatus = "Mise à jour de la galerie...";
+            await _vm.LoadAsync(force: true);
+
+            await DisplayAlert("Suppression", "Les éléments sélectionnés ont été supprimés.", "OK");
+        }
+        //catch (Exception ex)
+        //{
+        //    _vm.UploadStatus = "Échec de la suppression";
+        //    await _logService.LogError(ex, "Erreur durant la suppression manuelle.");
+        //    await DisplayAlert("Suppression", $"Erreur durant la suppression : {ex.Message}", "OK");
+        //}
+        finally
+        {
+            _vm.IsUploading = false;
+            _vm.UploadStatus = string.Empty;
+        }
+    }
+
     private async Task ExportLocallyAsync(List<MediaItem> selectedItems, PCloudAlbumSelection selection)
     {
         bool moveFiles = selection.MoveFiles;

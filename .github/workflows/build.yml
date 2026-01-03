@@ -71,7 +71,7 @@ jobs:
       - name: Inject build number metadata
         shell: bash
         run: |
-          cat <<EOF > src/pCloudPhotoOrganizer/Resources/Raw/buildinfo.json
+          cat <<EOF > Resources/Raw/buildinfo.json
           {"buildNumber":"${{ env.BUILD_NUMBER }}"
           }
           EOF

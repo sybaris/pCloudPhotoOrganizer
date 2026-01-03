@@ -15,17 +15,26 @@
     BackgroundColor="White">
     <maui:ContentPage.ToolbarItems>
         <ToolbarItem
+            IconImageSource="icon_delete.svg"
+            Clicked="OnDeleteSelectedClicked"
+            Priority="0"
+            Order="Primary"
+            Text="Supprimer"
+            IsEnabled="{Binding HasSelection}"
+            SemanticProperties.Description="Supprimer la sélection" />
+        <ToolbarItem
             IconImageSource="icon_refresh.svg"
             Command="{Binding RefreshCommand}"
-            Priority="0"
+            Priority="1"
             Order="Primary"
             Text="Refresh"
             SemanticProperties.Description="Actualiser la galerie" />
         <ToolbarItem
             IconImageSource="icon_transfer.svg"
             Clicked="OnSendToPCloudClicked"
-            Priority="1"
+            Priority="2"
             Order="Primary"
+            IsEnabled="{Binding HasSelection}"
             Text="Tranfert"
             SemanticProperties.Description="Vers pCloud" />
     </maui:ContentPage.ToolbarItems>
