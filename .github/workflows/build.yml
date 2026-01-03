@@ -132,6 +132,7 @@ jobs:
 
       - name: Delete previous APK from beta release
         uses: mknejp/delete-release-assets@v1
+        continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: beta
