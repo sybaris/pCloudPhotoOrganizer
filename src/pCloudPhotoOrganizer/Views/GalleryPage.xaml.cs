@@ -82,12 +82,13 @@ public partial class GalleryPage : ContentPage
         if (selection == null)
             return;
 
-        var exportMode = _settings.GetExportMode();
+            var exportMode = _settings.GetExportMode();
 
-        if (exportMode == ExportMode.Local)
-            await ExportLocallyAsync(selectionSnapshot, selection);
-        else
-            await ExportToPCloudAsync(selectionSnapshot, selection);
+            if (exportMode == ExportMode.Local)
+                await ExportLocallyAsync(selectionSnapshot, selection);
+            else
+                await ExportToPCloudAsync(selectionSnapshot, selection);
+         DeselectItems(selectionSnapshot);
     }
 
     private async Task ExportLocallyAsync(List<MediaItem> selectedItems, PCloudAlbumSelection selection)
@@ -295,6 +296,12 @@ public partial class GalleryPage : ContentPage
         var password = await _settings.GetPCloudPasswordAsync();
         var root = _settings.GetPCloudRootFolder();
         return (user, password, root);
+    }
+
+    private void DeselectItems(IEnumerable<MediaItem> items)
+    {
+        foreach (var item in items)
+            item.IsSelected = false;
     }
 
     private static string CombinePaths(string root, string album)
