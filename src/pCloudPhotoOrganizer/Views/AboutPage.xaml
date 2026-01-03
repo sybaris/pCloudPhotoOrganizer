@@ -17,6 +17,11 @@
           FontSize="Medium" />
 
       <Label
+          x:Name="BuildNumberLabel"
+          FontSize="Medium"
+          IsVisible="False" />
+
+      <Label
           x:Name="AndroidVersionLabel"
           FontSize="Medium"
           IsVisible="False" />

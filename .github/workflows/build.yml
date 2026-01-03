@@ -17,6 +17,7 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
   PROJECT_PATH: src/pCloudPhotoOrganizer/pCloudPhotoOrganizer.csproj
+  BUILD_NUMBER: ${{ github.run_number }}
 
 jobs:
   windows:
@@ -25,6 +26,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Inject build number metadata
+        shell: pwsh
+        run: |
+          $content = @{ buildNumber = "${{ env.BUILD_NUMBER }}" } | ConvertTo-Json -Compress
+          $path = "src/pCloudPhotoOrganizer/Resources/Raw/buildinfo.json"
+          New-Item -ItemType File -Path $path -Force | Out-Null
+          Set-Content -Path $path -Value $content -Encoding utf8
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -55,6 +64,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Inject build number metadata
+        shell: bash
+        run: |
+          cat <<EOF > src/pCloudPhotoOrganizer/Resources/Raw/buildinfo.json
+          {"buildNumber":"${{ env.BUILD_NUMBER }}"
+          }
+          EOF
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
