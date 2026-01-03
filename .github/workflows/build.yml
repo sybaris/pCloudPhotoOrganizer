@@ -97,13 +97,21 @@ jobs:
       - name: Restore packages (Android TFM)
         run: dotnet restore ${{ env.PROJECT_PATH  }} -p:TargetFramework=${{ env.ANDROID_TFM }}
 
+      - name: Restore Android keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > pcloudphotoorganizer.keystore
+
       - name: Publish Android APK
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} \
             -f ${{ env.ANDROID_TFM }} \
             -c ${{ env.CONFIGURATION }} \
             -p:AndroidPackageFormat=apk \
-            -p:AndroidSignPackage=false
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore=pcloudphotoorganizer.keystore \
+            -p:AndroidSigningKeyAlias=${{ secrets.ANDROID_KEY_ALIAS }} \
+            -p:AndroidSigningKeyPass=${{ secrets.ANDROID_KEY_PASSWORD }} \
+            -p:AndroidSigningStorePass=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
 
       - name: Rename Android APK
         run: |
