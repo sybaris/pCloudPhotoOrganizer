@@ -105,8 +105,14 @@ jobs:
             -p:AndroidPackageFormat=apk \
             -p:AndroidSignPackage=false
 
-          mv src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/*.apk \
-             src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/${{ env.ANDROID_APK_NAME }}
+      - name: Rename Android APK
+        run: |
+          APK_DIR="src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/publish"
+          ls -la "$APK_DIR"
+
+          mv "$APK_DIR"/*.apk \
+             "$APK_DIR/${{ env.ANDROID_APK_NAME }}"
+
       - name: Publish Android AAB
         run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.ANDROID_TFM }} -c ${{ env.CONFIGURATION }} -p:AndroidPackageFormat=aab -p:AndroidSignPackage=false
 
@@ -115,14 +121,14 @@ jobs:
         with:
           name: com.companyname.pcloudphotoorganizer-apk
           if-no-files-found: error
-          path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/**/*.apk
+          path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/publish/*.apk
 
       - name: Upload Android AAB
         uses: actions/upload-artifact@v4
         with:
           name: android-aab
           if-no-files-found: error
-          path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/**/*.aab
+          path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/publish/*.aab
 
       - name: Delete previous APK from beta release
         uses: mknejp/delete-release-assets@v1
