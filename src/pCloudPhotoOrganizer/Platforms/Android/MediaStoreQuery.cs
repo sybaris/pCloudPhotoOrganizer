@@ -120,19 +120,54 @@ public static class MediaStoreQuery
 
     private static List<string> NormalizeFolders(IEnumerable<string> allowedFolders)
         => allowedFolders
-            .Where(f => !string.IsNullOrWhiteSpace(f))
-            .Select(f => f.Replace("\\", "/").ToLowerInvariant())
+            .Select(NormalizeFolderPath)
+            .Where(f => !string.IsNullOrEmpty(f))
+            .Distinct(StringComparer.Ordinal)
             .ToList();
+
+    private static string NormalizeFolderPath(string? folder)
+    {
+        if (string.IsNullOrWhiteSpace(folder))
+            return string.Empty;
+
+        var normalized = folder
+            .Replace("\\", "/")
+            .Trim();
+
+        while (normalized.Contains("//", StringComparison.Ordinal))
+        {
+            normalized = normalized.Replace("//", "/", StringComparison.Ordinal);
+        }
+
+        normalized = normalized.TrimEnd('/');
+        if (normalized.Length == 0)
+            return "/";
+        return ($"{normalized}/").ToLowerInvariant();
+    }
+
+    private static string NormalizeEntryPath(string path)
+    {
+        var normalized = path
+            .Replace("\\", "/")
+            .Trim();
+
+        while (normalized.Contains("//", StringComparison.Ordinal))
+        {
+            normalized = normalized.Replace("//", "/", StringComparison.Ordinal);
+        }
+
+        return normalized.ToLowerInvariant();
+    }
 
     private static bool IsInAllowedFolders(string? path, List<string> normalizedFolders)
     {
         if (string.IsNullOrWhiteSpace(path))
             return false;
 
-        path = path.Replace("\\", "/").ToLowerInvariant();
+        var normalizedPath = NormalizeEntryPath(path);
 
         // Vérifier si le chemin commence par l'un des dossiers autorisés
-        return normalizedFolders.Any(folder => path.StartsWith(folder));
+        return normalizedFolders.Any(folder => normalizedPath.StartsWith(folder, StringComparison.Ordinal));
     }
 }
 
