@@ -1,4 +1,6 @@
 name: Build MAUI Apps
+permissions:
+  contents: write
 
 on:
   push:
@@ -18,6 +20,7 @@ env:
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
   PROJECT_PATH: src/pCloudPhotoOrganizer/pCloudPhotoOrganizer.csproj
   BUILD_NUMBER: ${{ github.run_number }}
+  ANDROID_APK_NAME: pCloudPhotoOrganizer-beta.apk
 
 jobs:
   windows:
@@ -95,8 +98,15 @@ jobs:
         run: dotnet restore ${{ env.PROJECT_PATH  }} -p:TargetFramework=${{ env.ANDROID_TFM }}
 
       - name: Publish Android APK
-        run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.ANDROID_TFM }} -c ${{ env.CONFIGURATION }} -p:AndroidPackageFormat=apk -p:AndroidSignPackage=false
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -f ${{ env.ANDROID_TFM }} \
+            -c ${{ env.CONFIGURATION }} \
+            -p:AndroidPackageFormat=apk \
+            -p:AndroidSignPackage=false
 
+          mv src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/*.apk \
+             src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/${{ env.ANDROID_APK_NAME }}
       - name: Publish Android AAB
         run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.ANDROID_TFM }} -c ${{ env.CONFIGURATION }} -p:AndroidPackageFormat=aab -p:AndroidSignPackage=false
 
@@ -113,3 +123,10 @@ jobs:
           name: android-aab
           if-no-files-found: error
           path: src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.ANDROID_TFM }}/**/*.aab
+
+      - name: Delete previous APK from beta release
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: beta
+          assets: "*.apk"
