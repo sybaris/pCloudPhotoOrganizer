@@ -100,8 +100,4 @@
         </MauiXaml>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="src\pCloudPhotoOrganizer\Resources\Raw\" />
-    </ItemGroup>
-
 </Project>
