@@ -23,43 +23,43 @@ env:
   ANDROID_APK_NAME: pCloudPhotoOrganizer-beta.apk
 
 jobs:
-  windows:
-    name: Build Windows (MSIX/AppxBundle)
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # windows:
+  #   name: Build Windows (MSIX/AppxBundle)
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-      - name: Inject build number metadata
-        shell: pwsh
-        run: |
-          $content = @{ buildNumber = "${{ env.BUILD_NUMBER }}" } | ConvertTo-Json -Compress
-          $path = "src/pCloudPhotoOrganizer/Resources/Raw/buildinfo.json"
-          New-Item -ItemType File -Path $path -Force | Out-Null
-          Set-Content -Path $path -Value $content -Encoding utf8
+  #     - name: Inject build number metadata
+  #       shell: pwsh
+  #       run: |
+  #         $content = @{ buildNumber = "${{ env.BUILD_NUMBER }}" } | ConvertTo-Json -Compress
+  #         $path = "src/pCloudPhotoOrganizer/Resources/Raw/buildinfo.json"
+  #         New-Item -ItemType File -Path $path -Force | Out-Null
+  #         Set-Content -Path $path -Value $content -Encoding utf8
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install MAUI workload
-        run: dotnet workload install maui
+  #     - name: Install MAUI workload
+  #       run: dotnet workload install maui
 
-      - name: Restore packages (Windows TFM)
-        run: dotnet restore ${{ env.PROJECT_PATH  }} -p:TargetFramework=${{ env.WINDOWS_TFM }}
+  #     - name: Restore packages (Windows TFM)
+  #       run: dotnet restore ${{ env.PROJECT_PATH  }} -p:TargetFramework=${{ env.WINDOWS_TFM }}
 
-      - name: Publish Windows package
-        run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.WINDOWS_TFM }} -c ${{ env.CONFIGURATION }} -p:WindowsPackageType=MSIX -p:AppxPackageSigningEnabled=false
+  #     - name: Publish Windows package
+  #       run: dotnet publish ${{ env.PROJECT_PATH  }} -f ${{ env.WINDOWS_TFM }} -c ${{ env.CONFIGURATION }} -p:WindowsPackageType=MSIX -p:AppxPackageSigningEnabled=false
 
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msix
-          if-no-files-found: error
-          path: |
-            src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.WINDOWS_TFM }}/**/*.msix
-            src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.WINDOWS_TFM }}/**/*.appxbundle
+  #     - name: Upload Windows artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: windows-msix
+  #         if-no-files-found: error
+  #         path: |
+  #           src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.WINDOWS_TFM }}/**/*.msix
+  #           src/pCloudPhotoOrganizer/bin/${{ env.CONFIGURATION }}/${{ env.WINDOWS_TFM }}/**/*.appxbundle
 
   android:
     name: Build Android (APK + AAB)
@@ -98,8 +98,11 @@ jobs:
         run: dotnet restore ${{ env.PROJECT_PATH  }} -p:TargetFramework=${{ env.ANDROID_TFM }}
 
       - name: Restore Android keystore
+        shell: bash
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > pcloudphotoorganizer.keystore
+            KEYSTORE_PATH="$GITHUB_WORKSPACE/pcloudphotoorganizer.keystore"
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
+            ls -la "$KEYSTORE_PATH"
 
       - name: Publish Android APK
         run: |
@@ -108,7 +111,7 @@ jobs:
             -c ${{ env.CONFIGURATION }} \
             -p:AndroidPackageFormat=apk \
             -p:AndroidKeyStore=true \
-            -p:AndroidSigningKeyStore=pcloudphotoorganizer.keystore \
+            -p:AndroidSigningKeyStore=$GITHUB_WORKSPACE/pcloudphotoorganizer.keystore \
             -p:AndroidSigningKeyAlias=${{ secrets.ANDROID_KEY_ALIAS }} \
             -p:AndroidSigningKeyPass=${{ secrets.ANDROID_KEY_PASSWORD }} \
             -p:AndroidSigningStorePass=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
