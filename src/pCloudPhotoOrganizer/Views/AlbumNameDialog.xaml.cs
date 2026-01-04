@@ -25,7 +25,11 @@ public partial class AlbumNameDialog : ContentPage
 
         MoveCheckBox.IsChecked = _defaultMoveMode;
 
-        // Place le focus et le curseur … la fin du texte saisi
+        FocusAlbumNameEntry();
+    }
+
+    private void FocusAlbumNameEntry()
+    {
         Dispatcher.Dispatch(() =>
         {
             AlbumNameEntry.Focus();
@@ -33,6 +37,11 @@ public partial class AlbumNameDialog : ContentPage
             AlbumNameEntry.CursorPosition = length;
             AlbumNameEntry.SelectionLength = 0;
         });
+    }
+
+    private void OnAlbumNameEntryLoaded(object? sender, EventArgs e)
+    {
+        FocusAlbumNameEntry();
     }
 
     private async void OnOkClicked(object sender, EventArgs e)

@@ -17,7 +17,8 @@
         Keyboard="Text"
         ReturnType="Done"
         Completed="OnAlbumNameCompleted"
-        ClearButtonVisibility="WhileEditing" />
+        ClearButtonVisibility="WhileEditing"
+        Loaded="OnAlbumNameEntryLoaded" />
 
     <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
       <CheckBox
