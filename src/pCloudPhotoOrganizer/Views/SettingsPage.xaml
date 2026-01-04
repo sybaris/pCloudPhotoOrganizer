@@ -5,6 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sys="clr-namespace:System;assembly=netstandard"
     xmlns:services="clr-namespace:pCloudPhotoOrganizer.Services"
+    xmlns:viewModels="clr-namespace:pCloudPhotoOrganizer.ViewModels"
+    x:DataType="viewModels:SettingsViewModel"
     Title="Paramètres">
 
   <ScrollView>
@@ -18,7 +20,9 @@
         <!-- Liste des dossiers -->
         <CollectionView x:Name="FoldersList"
                         HeightRequest="150"
-                        SelectionMode="Single">
+                        SelectionMode="Single"
+                        ItemsSource="{Binding Folders}"
+                        SelectedItem="{Binding SelectedFolder, Mode=TwoWay}">
           <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="sys:String">
               <HorizontalStackLayout Spacing="10" Padding="5">
@@ -36,7 +40,8 @@
           <Button Text="Ajouter"
                   Clicked="OnAddFolderClicked" />
           <Button Text="Supprimer sélection"
-                  Clicked="OnRemoveFolderClicked" />
+                  Clicked="OnRemoveFolderClicked"
+                  IsEnabled="{Binding CanRemoveFolder}" />
         </HorizontalStackLayout>
 
         <BoxView HeightRequest="1" Color="#DDDDDD" />
@@ -130,9 +135,9 @@
                IsVisible="False" />
 
         <Button Text="Sauvegarder"
-                Clicked="OnSaveAllClicked"
-                BackgroundColor="DodgerBlue"
-                TextColor="White" />
+                 Clicked="OnSaveAllClicked"
+                 BackgroundColor="DodgerBlue"
+                 TextColor="White" />
 
       </VerticalStackLayout>
     </ScrollView.Content>

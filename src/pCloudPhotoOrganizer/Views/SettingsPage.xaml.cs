@@ -1,6 +1,6 @@
 using System;
-using System.Collections.ObjectModel;
 using pCloudPhotoOrganizer.Services;
+using pCloudPhotoOrganizer.ViewModels;
 
 namespace pCloudPhotoOrganizer.Views;
 
@@ -12,22 +12,22 @@ public partial class SettingsPage : ContentPage
     private Border? _pCloudGroupBox;
     private Border? _localGroupBox;
 
-    public ObservableCollection<string> Folders { get; } = new();
+    public SettingsViewModel ViewModel { get; }
 
     public SettingsPage(SettingsService settings)
     {
         InitializeComponent();
         _settings = settings;
+        ViewModel = new SettingsViewModel();
+        BindingContext = ViewModel;
         UpdatePasswordVisibilityIcon();
         _pCloudGroupBox = this.FindByName<Border>("PCloudGroupBox");
         _localGroupBox = this.FindByName<Border>("LocalGroupBox");
 
         foreach (var folder in _settings.GetSelectedFolders())
         {
-            Folders.Add(folder);
+            ViewModel.Folders.Add(folder);
         }
-
-        FoldersList.ItemsSource = Folders;
     }
 
     protected override async void OnAppearing()
@@ -58,17 +58,18 @@ public partial class SettingsPage : ContentPage
         if (string.IsNullOrWhiteSpace(path))
             return;
 
-        if (!Folders.Contains(path))
-            Folders.Add(path);
+        if (!ViewModel.Folders.Contains(path))
+            ViewModel.Folders.Add(path);
 
         FolderEntry.Text = string.Empty;
     }
 
     private void OnRemoveFolderClicked(object sender, EventArgs e)
     {
-        if (FoldersList.SelectedItem is string selected)
+        if (ViewModel.SelectedFolder is string selected)
         {
-            Folders.Remove(selected);
+            ViewModel.Folders.Remove(selected);
+            ViewModel.SelectedFolder = null;
         }
     }
 
@@ -82,7 +83,7 @@ public partial class SettingsPage : ContentPage
                              !string.IsNullOrWhiteSpace(password) ||
                              !string.IsNullOrWhiteSpace(root);
 
-        _settings.SaveSelectedFolders(Folders);
+        _settings.SaveSelectedFolders(ViewModel.Folders);
         _settings.SaveDefaultMoveMode(DefaultMoveSwitch.IsToggled);
         _settings.SaveExportMode(_exportMode);
         _settings.SaveLocalExportPath(localPath);
